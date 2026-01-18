@@ -6,6 +6,6 @@ and cavity free spectral range (FSR) need to be calculated and modeled.
 
 
 ```@autodocs
-Modules = [Models]
+Modules = [CurveFitModels]
 Pages = ["special_functions.jl"]
 ```

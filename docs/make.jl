@@ -1,14 +1,14 @@
 push!(LOAD_PATH, "../src/")
 
-using Documenter, Models
+using Documenter, CurveFitModels
 
 makedocs(
-    sitename="Models.jl",
+    sitename="CurveFitModels.jl",
     authors = "Garrek Stemo",
-    modules = [Models],
+    modules = [CurveFitModels],
     pages = [
         "Home" => "index.md",
-        "Models" => "funcs.md",
+        "Model Functions" => "funcs.md",
         "Special Functions" => "specialfuncs.md"
     ]
     )

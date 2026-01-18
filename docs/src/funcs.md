@@ -4,6 +4,6 @@ Common functions and lineshapes for spectroscopy.
 
 
 ```@autodocs
-Modules = [Models]
+Modules = [CurveFitModels]
 Pages = ["model_functions.jl"]
 ```
