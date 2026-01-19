@@ -10,7 +10,7 @@ Since this package is not registered, install it directly from GitHub:
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/garrekds/CurveFitModels.jl")
+Pkg.add(url="https://github.com/garrekstemo/CurveFitModels.jl")
 ```
 
 ## Example
