@@ -1,8 +1,6 @@
 [deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-Models = "1f9b919b-fd1b-4396-9cba-39be8ca4ba18"
-Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+CurveFitModels = "a3c2e87f-4d91-4e5b-9f3a-7c8b6d2e1f0a"
 
 [compat]
 Documenter = "1"

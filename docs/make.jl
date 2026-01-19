@@ -8,10 +8,10 @@ makedocs(
     modules = [CurveFitModels],
     pages = [
         "Home" => "index.md",
-        "Model Functions" => "funcs.md",
-        "Special Functions" => "specialfuncs.md"
+        "Model Functions" => "functions.md",
+        "Special Functions" => "specialfunctions.md"
     ]
     )
 deploydocs(
-    repo = "github.com/garrekstemo/Models.jl.git"
+    repo = "github.com/garrekstemo/CurveFitModels.jl.git"
 )
