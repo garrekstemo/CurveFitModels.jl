@@ -6,18 +6,24 @@ All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where
 
 ## Example Usage
 
+Fit a Lorentzian to a molecular absorption peak:
+
 ```julia
 using CurveFit
 using CurveFitModels
 
-# Generate some noisy data
-t = collect(0.0:0.1:5.0)
-p_true = [2.0, 0.5, 0.1]  # [A, τ, y₀]
-y_data = single_exponential(p_true, t) .+ 0.05 * randn(length(t))
+# Simulated IR absorption peak near 2100 cm⁻¹ (e.g., C≡O stretch)
+ν = range(2050, 2150, length=100)  # wavenumber (cm⁻¹)
+true_params = [5.0, 2100.0, 12.0]  # [amplitude, center, FWHM]
+y = lorentzian_fwhm(true_params, ν) .+ 0.003 .* randn(length(ν))
 
-# Fit the data
-p0 = [1.5, 0.3, 0.0]  # initial guess
-prob = NonlinearCurveFitProblem(single_exponential, p0, t, y_data)
+# Fit with initial guess
+p0 = [4.7, 2098.0, 15.0]  # initial guess for [A, ν₀, Γ]
+prob = NonlinearCurveFitProblem(lorentzian_fwhm, p0, ν, y)
 sol = solve(prob)
-p_fit = coef(sol)
+
+# Extract fitted parameters
+A, ν₀, Γ = sol.u
 ```
+
+![Lorentzian fit example](assets/lorentzian_fit_example.png)
