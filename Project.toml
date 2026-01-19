@@ -4,7 +4,6 @@ version = "0.4.0"
 authors = ["Garrek Stemo <8449000+garrekds@users.noreply.github.com>"]
 
 [deps]
-CurveFit = "5a033b19-8c74-5913-a970-47c3779ef25c"
 
 [compat]
-CurveFit = "1"
+julia = "1.10"
