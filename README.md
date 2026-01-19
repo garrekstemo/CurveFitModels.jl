@@ -22,13 +22,13 @@ using CurveFit
 using CurveFitModels
 using CairoMakie
 
-# Simulated IR absorption peak near 2000 cm⁻¹ (e.g., C≡O stretch)
-ν = range(1950, 2050, length=100)  # wavenumber (cm⁻¹)
-true_params = [0.8, 2000.0, 12.0]  # [amplitude, center, FWHM]
-y = lorentzian_fwhm(true_params, ν) .+ 0.01 .* randn(length(ν))
+# Simulated IR absorption peak near 2100 cm⁻¹ (e.g., C≡O stretch)
+ν = range(2050, 2150, length=100)  # wavenumber (cm⁻¹)
+true_params = [5.0, 2100.0, 12.0]  # [amplitude, center, FWHM]
+y = lorentzian_fwhm(true_params, ν) .+ 0.003 .* randn(length(ν))
 
 # Fit with initial guess
-p0 = [0.7, 1998.0, 15.0]  # initial guess for [A, ν₀, Γ]
+p0 = [4.7, 2098.0, 15.0]  # initial guess for [A, ν₀, Γ]
 prob = NonlinearCurveFitProblem(lorentzian_fwhm, p0, ν, y)
 sol = solve(prob)
 
@@ -44,7 +44,7 @@ lines!(ax, ν, y_fit, color=:crimson, linewidth=2, label="Fit")
 axislegend(ax, position=:rt)
 
 # Annotations
-text!(ax, 1955, 0.035, text="ν₀ = $(round(ν₀, digits=1)) cm⁻¹\nΓ = $(round(Γ, digits=1)) cm⁻¹\nA = $(round(A, digits=2))", fontsize=12)
+text!(ax, 2055, 0.035, text="ν₀ = $(round(ν₀, digits=1)) cm⁻¹\nΓ = $(round(Γ, digits=1)) cm⁻¹\nA = $(round(A, digits=2))", fontsize=12)
 
 fig
 ```
