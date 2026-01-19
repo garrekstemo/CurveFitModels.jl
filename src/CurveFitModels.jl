@@ -12,10 +12,7 @@ export single_exponential,
        complex_lorentzian,
        dielectric_real,
        dielectric_imag,
-       cavity_mode_energy,
-       polariton_branches,
-       cavity_transmittance,
-       fsr
+       cavity_transmittance
 
 include("lineshapes.jl")
 include("temporal.jl")
