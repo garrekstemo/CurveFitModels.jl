@@ -80,76 +80,9 @@ function dielectric_imag(p, ν)
 end
 
 """
-    cavity_mode_energy(p, θ)
-
-Cavity mode energy as a function of incident angle.
-
-# Arguments
-- `p`: Parameters [E₀, n_eff]
-  - `E₀`: Cavity mode energy at normal incidence
-  - `n_eff`: Effective refractive index
-- `θ`: Incident angle(s) in radians
-
-```math
-\\begin{aligned}
-    E_\\text{cavity}(\\theta) = \\frac{E_0}{\\sqrt{1 - \\sin^2(\\theta)/n_{\\text{eff}}^2}}
-\\end{aligned}
-```
-
-[https://en.wikipedia.org/wiki/Fabry–Pérot_interferometer](https://en.wikipedia.org/wiki/Fabry–Pérot_interferometer)
-"""
-function cavity_mode_energy(p, θ)
-    E₀, n_eff = p
-    return @. E₀ / sqrt(1 - (sin(θ) / n_eff)^2)
-end
-
-"""
-    polariton_branches(θ, E₀, E_v, n_eff, Ω; branch=:upper)
-
-Polariton dispersion from the coupled-oscillator model.
-
-Computes the upper (`:upper`) or lower (`:lower`) polariton branch energy
-as a function of angle by diagonalizing the coupled Hamiltonian.
-
-# Arguments
-- `θ`: Incident angle(s) in radians
-- `E₀`: Cavity mode energy at normal incidence
-- `E_v`: Vibrational/excitonic energy
-- `n_eff`: Effective refractive index
-- `Ω`: Rabi splitting energy
-
-# Keyword Arguments
-- `branch`: `:upper` or `:lower` (default: `:upper`)
-
-```math
-\\begin{aligned}
-    E_{\\pm}(\\theta) = \\frac{1}{2}\\left(E_c(\\theta) + E_v\\right) \\pm \\frac{1}{2} \\sqrt{\\Omega^2 + (E_c(\\theta) - E_v)^2}
-\\end{aligned}
-```
-
-For fitting both branches simultaneously, use a wrapper:
-```julia
-function both_branches(p, θ)
-    E₀, E_v, n_eff, Ω = p
-    upper = polariton_branches(θ, E₀, E_v, n_eff, Ω; branch=:upper)
-    lower = polariton_branches(θ, E₀, E_v, n_eff, Ω; branch=:lower)
-    vcat(upper, lower)
-end
-```
-
-[https://en.wikipedia.org/wiki/Polariton](https://en.wikipedia.org/wiki/Polariton)
-"""
-function polariton_branches(θ, E₀, E_v, n_eff, Ω; branch=:upper)
-    E_c = cavity_mode_energy([E₀, n_eff], θ)
-    sign = branch == :upper ? 1 : -1
-    return @. 0.5 * (E_v + E_c + sign * sqrt(Ω^2 + (E_c - E_v)^2))
-end
-
-
-"""
     cavity_transmittance(p, ν)
 
-Fabry-Pérot cavity transmittance as a function of frequency.
+Fabry-Pérot cavity transmittance with an absorbing medium as a function of frequency.
 
 # Arguments
 - `p`: Parameters [n, α, L, R, ϕ]
