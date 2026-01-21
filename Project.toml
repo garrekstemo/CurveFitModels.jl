@@ -1,7 +1,7 @@
 name = "CurveFitModels"
 uuid = "a3c2e87f-4d91-4e5b-9f3a-7c8b6d2e1f0a"
 version = "0.4.0"
-authors = ["Garrek Stemo <8449000+garrekds@users.noreply.github.com>"]
+authors = ["Garrek Stemo <8449000+garrekstemo@users.noreply.github.com>"]
 
 [deps]
 
