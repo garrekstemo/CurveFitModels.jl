@@ -19,6 +19,24 @@ Convert full width at half maximum to Gaussian standard deviation.
 fwhm_to_sigma(fwhm) = fwhm / FWHM_SIGMA_FACTOR
 
 """
+    gaussian_area(A, σ)
+
+Calculate the integrated area under a Gaussian with peak amplitude `A` and standard deviation `σ`.
+
+Area = A × σ × √(2π)
+"""
+gaussian_area(A, σ) = A * σ * sqrt(2π)
+
+"""
+    lorentzian_area(A, Γ)
+
+Calculate the integrated area under a Lorentzian with peak amplitude `A` and FWHM `Γ`.
+
+Area = A × π × Γ / 2
+"""
+lorentzian_area(A, Γ) = A * π * Γ / 2
+
+"""
     gaussian(p, x)
 
 Gaussian function with standard deviation parameterization.
@@ -54,15 +72,17 @@ Lorentzian (Cauchy) lineshape with FWHM parameterization.
 
 # Arguments
 - `p`: Parameters [A, x₀, Γ] or [A, x₀, Γ, y₀]
-  - `A`: Amplitude
+  - `A`: Peak amplitude (value at x₀)
   - `x₀`: Center position
   - `Γ`: Full width at half maximum (FWHM)
   - `y₀`: Vertical offset (default: 0.0)
 - `x`: Independent variable
 
+The integrated area is `A × π × Γ / 2`.
+
 ```math
 \\begin{aligned}
-    f(x) = \\frac{A}{\\pi} \\frac{\\Gamma/2}{(x - x_0)^2 + (\\Gamma/2)^2} + y_0
+    f(x) = \\frac{A}{1 + \\left(\\frac{x - x_0}{\\Gamma/2}\\right)^2} + y_0
 \\end{aligned}
 ```
 
@@ -71,7 +91,7 @@ Lorentzian (Cauchy) lineshape with FWHM parameterization.
 function lorentzian(p, x)
     A, x0, Γ = p[1:3]
     y₀ = length(p) >= 4 ? p[4] : 0.0
-    @. (A / π) * (Γ / 2) / ((x - x0)^2 + (Γ / 2)^2) + y₀
+    @. A / (1 + ((x - x0) / (Γ / 2))^2) + y₀
 end
 
 """

@@ -58,6 +58,24 @@ Random.seed!(42)
         @test isapprox(fwhm, 2 * sqrt(2 * log(2)) * σ, atol=1e-10)
     end
 
+    @testset "area_functions" begin
+        # Gaussian area: numerical integration vs analytical formula
+        A, σ = 2.0, 1.5
+        x = collect(range(-20, 20, length=10000))
+        dx = x[2] - x[1]
+        y = gaussian([A, 0.0, σ], x)
+        numerical_area = sum(y) * dx
+        @test isapprox(numerical_area, gaussian_area(A, σ), rtol=0.001)
+
+        # Lorentzian area: numerical integration vs analytical formula
+        A, Γ = 3.0, 2.0
+        x = collect(range(-500, 500, length=100000))
+        dx = x[2] - x[1]
+        y = lorentzian([A, 0.0, Γ], x)
+        numerical_area = sum(y) * dx
+        @test isapprox(numerical_area, lorentzian_area(A, Γ), rtol=0.01)
+    end
+
     @testset "lorentzian" begin
         # True parameters: A=2.0, x0=0.5, Γ=0.5, y₀=0.1
         x = collect(-2.0:0.05:3.0)

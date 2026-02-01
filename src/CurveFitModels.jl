@@ -2,8 +2,10 @@ module CurveFitModels
 
 export single_exponential,
        gaussian,
+       gaussian_area,
        gaussian2d,
        lorentzian,
+       lorentzian_area,
        sigma_to_fwhm,
        fwhm_to_sigma,
        sine,
