@@ -37,6 +37,53 @@ Area = A × π × Γ / 2
 lorentzian_area(A, Γ) = A * π * Γ / 2
 
 """
+    poly(p, x)
+
+Polynomial function for curve fitting. Uses Horner's method via `evalpoly`.
+
+# Arguments
+- `p`: Coefficients [c₀, c₁, c₂, ...] for c₀ + c₁x + c₂x² + ...
+- `x`: Independent variable
+
+# Example
+```julia
+poly([1.0, 2.0, 3.0], [0.0, 1.0, 2.0])  # 1 + 2x + 3x²
+# returns [1.0, 6.0, 17.0]
+```
+
+Combine with other models for simultaneous baseline fitting:
+```julia
+model(p, x) = lorentzian(p[1:3], x) .+ poly(p[4:5], x)
+```
+"""
+poly(p, x) = evalpoly.(x, Ref(Tuple(p)))
+
+"""
+    combine(f1, n1, f2, n2)
+
+Combine two model functions into one by splitting the parameter vector.
+
+# Arguments
+- `f1`: First model function with signature `f1(p, x)`
+- `n1`: Number of parameters for `f1`
+- `f2`: Second model function with signature `f2(p, x)`
+- `n2`: Number of parameters for `f2`
+
+Returns a new function `(p, x) -> f1(p[1:n1], x) .+ f2(p[n1+1:n1+n2], x)`.
+
+# Example
+```julia
+# Lorentzian (3 params) + linear baseline (2 params)
+model = combine(lorentzian, 3, poly, 2)
+
+p0 = [1.0, 0.0, 1.0, 0.1, 0.01]  # [A, x0, Γ, c0, c1]
+prob = NonlinearCurveFitProblem(model, p0, x, y)
+sol = solve(prob)
+```
+"""
+combine(f1, n1, f2, n2) = (p, x) -> f1(p[1:n1], x) .+ f2(p[n1+1:n1+n2], x)
+
+"""
     gaussian(p, x)
 
 Gaussian function with standard deviation parameterization.

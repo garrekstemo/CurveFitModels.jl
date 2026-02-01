@@ -76,6 +76,41 @@ Random.seed!(42)
         @test isapprox(numerical_area, lorentzian_area(A, Γ), rtol=0.01)
     end
 
+    @testset "poly" begin
+        # Constant
+        @test poly([5.0], [1.0, 2.0, 3.0]) ≈ [5.0, 5.0, 5.0]
+
+        # Linear: 1 + 2x
+        @test poly([1.0, 2.0], [0.0, 1.0, 2.0]) ≈ [1.0, 3.0, 5.0]
+
+        # Quadratic: 1 + 2x + 3x²
+        @test poly([1.0, 2.0, 3.0], [0.0, 1.0, 2.0]) ≈ [1.0, 6.0, 17.0]
+    end
+
+    @testset "combine" begin
+        model = combine(lorentzian, 3, poly, 2)
+
+        x = collect(-5.0:0.1:5.0)
+        p = [3.0, 0.0, 1.0, 0.5, 0.1]  # [A, x0, Γ, c0, c1]
+
+        y_lor = lorentzian(p[1:3], x)
+        y_poly = poly(p[4:5], x)
+        y_combined = model(p, x)
+
+        @test y_combined ≈ y_lor .+ y_poly
+
+        # Test fitting with combined model
+        y_data = y_combined .+ 0.01 .* randn(length(x))
+        p0 = [2.5, 0.1, 1.2, 0.4, 0.05]
+        prob = NonlinearCurveFitProblem(model, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p[1], atol=0.3)
+        @test isapprox(p_fit[2], p[2], atol=0.2)
+        @test isapprox(p_fit[3], p[3], atol=0.2)
+    end
+
     @testset "lorentzian" begin
         # True parameters: A=2.0, x0=0.5, Γ=0.5, y₀=0.1
         x = collect(-2.0:0.05:3.0)

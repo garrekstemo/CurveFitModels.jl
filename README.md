@@ -76,5 +76,18 @@ area = gaussian_area(A, σ)    # A × σ × √(2π)
 area = lorentzian_area(A, Γ)  # A × π × Γ / 2
 ```
 
+## Model Composition
+
+Combine models with polynomial baselines for simultaneous fitting:
+
+```julia
+# poly(p, x) evaluates c₀ + c₁x + c₂x² + ...
+model = combine(lorentzian, 3, poly, 2)  # lorentzian + linear baseline
+
+p0 = [A, x0, Γ, c0, c1]  # peak params + baseline params
+prob = NonlinearCurveFitProblem(model, p0, x, y)
+sol = solve(prob)
+```
+
 See the [CurveFit.jl documentation](https://github.com/SciML/CurveFit.jl) for more details on fitting.
 
