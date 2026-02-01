@@ -1,3 +1,23 @@
+const FWHM_SIGMA_FACTOR = 2 * sqrt(2 * log(2))  # ≈ 2.3548
+
+"""
+    sigma_to_fwhm(σ)
+
+Convert Gaussian standard deviation to full width at half maximum.
+
+FWHM = 2√(2ln2) × σ ≈ 2.355 × σ
+"""
+sigma_to_fwhm(σ) = FWHM_SIGMA_FACTOR * σ
+
+"""
+    fwhm_to_sigma(fwhm)
+
+Convert full width at half maximum to Gaussian standard deviation.
+
+σ = FWHM / 2√(2ln2) ≈ FWHM / 2.355
+"""
+fwhm_to_sigma(fwhm) = fwhm / FWHM_SIGMA_FACTOR
+
 """
     gaussian(p, x)
 
@@ -7,9 +27,11 @@ Gaussian function with standard deviation parameterization.
 - `p`: Parameters [A, x₀, σ] or [A, x₀, σ, y₀]
   - `A`: Amplitude
   - `x₀`: Center position
-  - `σ`: Standard deviation (σ = FWHM / 2.355)
+  - `σ`: Standard deviation
   - `y₀`: Vertical offset (default: 0.0)
 - `x`: Independent variable
+
+Use `fwhm_to_sigma` and `sigma_to_fwhm` to convert between σ and FWHM.
 
 ```math
 \\begin{aligned}
@@ -26,67 +48,13 @@ function gaussian(p, x)
 end
 
 """
-    gaussian_fwhm(p, x)
+    lorentzian(p, x)
 
-Gaussian function with FWHM (Full Width at Half Maximum) parameterization.
+Lorentzian (Cauchy) lineshape with FWHM parameterization.
 
 # Arguments
 - `p`: Parameters [A, x₀, Γ] or [A, x₀, Γ, y₀]
   - `A`: Amplitude
-  - `x₀`: Center position
-  - `Γ`: Full width at half maximum (FWHM)
-  - `y₀`: Vertical offset (default: 0.0)
-- `x`: Independent variable
-
-```math
-\\begin{aligned}
-    f(x) = A \\exp\\left(-4 \\ln(2) \\frac{(x - x_0)^2}{\\Gamma^2}\\right) + y_0
-\\end{aligned}
-```
-
-[https://en.wikipedia.org/wiki/Gaussian_function](https://en.wikipedia.org/wiki/Gaussian_function)
-"""
-function gaussian_fwhm(p, x)
-    A, x0, Γ = p[1:3]
-    y₀ = length(p) >= 4 ? p[4] : 0.0
-    @. A * exp(-4 * log(2) * ((x - x0)^2) / (Γ^2)) + y₀
-end
-
-"""
-    lorentzian(p, x)
-
-Lorentzian (Cauchy) distribution function.
-
-# Arguments
-- `p`: Parameters [A, x₀, γ] or [A, x₀, γ, y₀]
-  - `A`: Amplitude scaling factor
-  - `x₀`: Center position
-  - `γ`: Half-width at half maximum (HWHM)
-  - `y₀`: Vertical offset (default: 0.0)
-- `x`: Independent variable
-
-```math
-\\begin{aligned}
-    f(x) = \\frac{A \\gamma}{(x - x_0)^2 + \\gamma^2} + y_0
-\\end{aligned}
-```
-
-[https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
-"""
-function lorentzian(p, x)
-    A, x0, σ = p[1:3]
-    y₀ = length(p) >= 4 ? p[4] : 0.0
-    @. A * σ / ((x - x0)^2 + σ^2) + y₀
-end
-
-"""
-    lorentzian_fwhm(p, x)
-
-Lorentzian (Cauchy) function with FWHM parameterization.
-
-# Arguments
-- `p`: Parameters [A, x₀, Γ] or [A, x₀, Γ, y₀]
-  - `A`: Amplitude (area under curve × π)
   - `x₀`: Center position
   - `Γ`: Full width at half maximum (FWHM)
   - `y₀`: Vertical offset (default: 0.0)
@@ -100,7 +68,7 @@ Lorentzian (Cauchy) function with FWHM parameterization.
 
 [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
 """
-function lorentzian_fwhm(p, x)
+function lorentzian(p, x)
     A, x0, Γ = p[1:3]
     y₀ = length(p) >= 4 ? p[4] : 0.0
     @. (A / π) * (Γ / 2) / ((x - x0)^2 + (Γ / 2)^2) + y₀

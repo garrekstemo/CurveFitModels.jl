@@ -25,16 +25,16 @@ using CairoMakie
 # Simulated IR absorption peak near 2100 cm⁻¹ (e.g., C≡O stretch)
 ν = range(2050, 2150, length=100)  # wavenumber (cm⁻¹)
 true_params = [5.0, 2100.0, 12.0]  # [amplitude, center, FWHM]
-y = lorentzian_fwhm(true_params, ν) .+ 0.003 .* randn(length(ν))
+y = lorentzian(true_params, ν) .+ 0.003 .* randn(length(ν))
 
 # Fit with initial guess
 p0 = [4.7, 2098.0, 15.0]  # initial guess for [A, ν₀, Γ]
-prob = NonlinearCurveFitProblem(lorentzian_fwhm, p0, ν, y)
+prob = NonlinearCurveFitProblem(lorentzian, p0, ν, y)
 sol = solve(prob)
 
 # Extract fitted parameters
 A, ν₀, Γ = sol.u
-y_fit = lorentzian_fwhm(sol.u, ν)
+y_fit = lorentzian(sol.u, ν)
 
 # Plot
 fig = Figure(size=(500, 400))
@@ -50,6 +50,16 @@ fig
 ```
 
 ![Lorentzian fit example](docs/src/assets/lorentzian_fit_example.png)
+
+## Width Parameters
+
+- **Lorentzian**: Uses FWHM (Γ) directly — the value you measure from a spectrum.
+- **Gaussian**: Uses standard deviation (σ). Convert with the helper functions:
+
+```julia
+σ = fwhm_to_sigma(measured_fwhm)   # before fitting
+fitted_fwhm = sigma_to_fwhm(σ)     # after fitting
+```
 
 See the [CurveFit.jl documentation](https://github.com/SciML/CurveFit.jl) for more details on fitting.
 

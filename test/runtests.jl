@@ -47,54 +47,27 @@ Random.seed!(42)
         @test isapprox(p_fit[4], p_true[4], atol=0.2)
     end
 
-    @testset "gaussian_fwhm" begin
-        # True parameters: A=2.5, x0=1.0, Γ=1.0, y₀=0.1
-        x = collect(-2.0:0.1:4.0)
-        p_true = [2.5, 1.0, 1.0, 0.1]
-        y_true = gaussian_fwhm(p_true, x)
-        noise = 0.05 * randn(length(x))
-        y_data = y_true .+ noise
+    @testset "sigma_fwhm_conversion" begin
+        # Test round-trip conversion
+        σ = 1.0
+        fwhm = sigma_to_fwhm(σ)
+        @test isapprox(fwhm, 2.3548, atol=0.001)
+        @test isapprox(fwhm_to_sigma(fwhm), σ, atol=1e-10)
 
-        p0 = [2.0, 0.8, 0.8, 0.0]
-        prob = NonlinearCurveFitProblem(gaussian_fwhm, p0, x, y_data)
-        sol = solve(prob)
-        p_fit = coef(sol)
-
-        @test isapprox(p_fit[1], p_true[1], atol=0.2)
-        @test isapprox(p_fit[2], p_true[2], atol=0.2)
-        @test isapprox(p_fit[3], p_true[3], atol=0.2)
-        @test isapprox(p_fit[4], p_true[4], atol=0.2)
+        # Test known relationship: FWHM = 2√(2ln2) × σ
+        @test isapprox(fwhm, 2 * sqrt(2 * log(2)) * σ, atol=1e-10)
     end
 
     @testset "lorentzian" begin
-        # True parameters: A=2.0, x0=0.0, σ=0.3, y₀=0.1
-        x = collect(-2.0:0.05:2.0)
-        p_true = [2.0, 0.0, 0.3, 0.1]
-        y_true = lorentzian(p_true, x)
-        noise = 0.05 * randn(length(x))
-        y_data = y_true .+ noise
-
-        p0 = [1.5, 0.1, 0.2, 0.0]
-        prob = NonlinearCurveFitProblem(lorentzian, p0, x, y_data)
-        sol = solve(prob)
-        p_fit = coef(sol)
-
-        @test isapprox(p_fit[1], p_true[1], atol=0.3)
-        @test isapprox(p_fit[2], p_true[2], atol=0.2)
-        @test isapprox(p_fit[3], p_true[3], atol=0.2)
-        @test isapprox(p_fit[4], p_true[4], atol=0.2)
-    end
-
-    @testset "lorentzian_fwhm" begin
         # True parameters: A=2.0, x0=0.5, Γ=0.5, y₀=0.1
         x = collect(-2.0:0.05:3.0)
         p_true = [2.0, 0.5, 0.5, 0.1]
-        y_true = lorentzian_fwhm(p_true, x)
+        y_true = lorentzian(p_true, x)
         noise = 0.02 * randn(length(x))
         y_data = y_true .+ noise
 
         p0 = [1.5, 0.3, 0.4, 0.0]
-        prob = NonlinearCurveFitProblem(lorentzian_fwhm, p0, x, y_data)
+        prob = NonlinearCurveFitProblem(lorentzian, p0, x, y_data)
         sol = solve(prob)
         p_fit = coef(sol)
 
