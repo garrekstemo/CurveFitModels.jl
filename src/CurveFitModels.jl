@@ -1,6 +1,7 @@
 module CurveFitModels
 
 export single_exponential,
+       n_exponentials,
        gaussian,
        gaussian_area,
        gaussian2d,

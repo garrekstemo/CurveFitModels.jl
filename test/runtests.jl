@@ -28,6 +28,88 @@ Random.seed!(42)
         @test isapprox(p_fit[3], p_true[3], atol=0.1)
     end
 
+    @testset "n_exponentials" begin
+        t = collect(0.0:0.05:5.0)
+
+        @testset "n=1 matches single_exponential" begin
+            mono_exp = n_exponentials(1)
+            p = [2.0, 0.5, 0.1]  # [A, τ, y₀]
+            y_n = mono_exp(p, t)
+            y_single = single_exponential(p, t)
+            @test y_n ≈ y_single
+        end
+
+        @testset "n=2 mathematical properties" begin
+            bi_exp = n_exponentials(2)
+            p = [3.0, 0.3, 2.0, 1.5, 0.5]  # [A₁, τ₁, A₂, τ₂, y₀]
+
+            y = bi_exp(p, t)
+
+            # At t=0: y = A₁ + A₂ + y₀
+            @test y[1] ≈ p[1] + p[3] + p[5]
+
+            # As t→∞: y → y₀ (check at large t)
+            t_large = [100.0]
+            y_inf = bi_exp(p, t_large)
+            @test isapprox(y_inf[1], p[5], atol=1e-10)
+
+            # Verify it's the sum of two exponentials
+            y_manual = @. p[1] * exp(-t / p[2]) + p[3] * exp(-t / p[4]) + p[5]
+            @test y ≈ y_manual
+        end
+
+        @testset "n=1 fitting" begin
+            mono_exp = n_exponentials(1)
+            p_true = [2.5, 0.8, 0.2]
+            y_data = mono_exp(p_true, t) .+ 0.02 .* randn(length(t))
+
+            p0 = [2.0, 0.5, 0.1]
+            prob = NonlinearCurveFitProblem(mono_exp, p0, t, y_data)
+            sol = solve(prob)
+            p_fit = coef(sol)
+
+            @test isapprox(p_fit[1], p_true[1], atol=0.2)
+            @test isapprox(p_fit[2], p_true[2], atol=0.2)
+            @test isapprox(p_fit[3], p_true[3], atol=0.1)
+        end
+
+        @testset "n=2 fitting (biexponential)" begin
+            bi_exp = n_exponentials(2)
+            # Fast and slow components with distinct time constants
+            p_true = [1.5, 0.2, 1.0, 2.0, 0.1]  # [A₁, τ₁, A₂, τ₂, y₀]
+            y_data = bi_exp(p_true, t) .+ 0.02 .* randn(length(t))
+
+            p0 = [1.0, 0.3, 0.8, 1.5, 0.05]
+            prob = NonlinearCurveFitProblem(bi_exp, p0, t, y_data)
+            sol = solve(prob)
+            p_fit = coef(sol)
+
+            # Check total amplitude and offset recovery
+            # (individual components may swap due to symmetry)
+            total_amp_true = p_true[1] + p_true[3]
+            total_amp_fit = p_fit[1] + p_fit[3]
+            @test isapprox(total_amp_fit, total_amp_true, atol=0.3)
+            @test isapprox(p_fit[5], p_true[5], atol=0.1)
+
+            # Verify fit quality using CurveFit's rss (residual sum of squares)
+            @test sqrt(rss(sol) / length(t)) < 0.05
+        end
+
+        @testset "n=3 triexponential" begin
+            tri_exp = n_exponentials(3)
+            p = [1.0, 0.1, 2.0, 0.5, 1.5, 2.0, 0.3]  # [A₁, τ₁, A₂, τ₂, A₃, τ₃, y₀]
+
+            y = tri_exp(p, t)
+
+            # At t=0: y = A₁ + A₂ + A₃ + y₀
+            @test y[1] ≈ p[1] + p[3] + p[5] + p[7]
+
+            # Verify manual calculation
+            y_manual = @. p[1] * exp(-t / p[2]) + p[3] * exp(-t / p[4]) + p[5] * exp(-t / p[6]) + p[7]
+            @test y ≈ y_manual
+        end
+    end
+
     @testset "gaussian" begin
         # True parameters: A=3.0, x0=2.0, σ=0.5, y₀=0.2
         x = collect(-1.0:0.1:5.0)
