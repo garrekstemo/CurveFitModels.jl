@@ -4,6 +4,26 @@ A Julia package containing model functions for curve fitting with [CurveFit.jl](
 
 All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where parameters come first.
 
+## Parameters
+
+Both `gaussian` and `lorentzian` use consistent parameterization:
+
+| Parameter | Gaussian | Lorentzian |
+|-----------|----------|------------|
+| `A` | Peak amplitude | Peak amplitude |
+| `x₀` | Center position | Center position |
+| Width | `σ` (std dev) | `Γ` (FWHM) |
+| `y₀` | Offset (optional) | Offset (optional) |
+
+Helper functions for width conversion and area calculation:
+
+```julia
+fwhm = sigma_to_fwhm(σ)       # Gaussian σ → FWHM
+σ = fwhm_to_sigma(fwhm)       # FWHM → Gaussian σ
+area = gaussian_area(A, σ)    # A × σ × √(2π)
+area = lorentzian_area(A, Γ)  # A × π × Γ / 2
+```
+
 ## Example Usage
 
 Fit a Lorentzian to a molecular absorption peak:

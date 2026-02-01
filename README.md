@@ -51,14 +51,29 @@ fig
 
 ![Lorentzian fit example](docs/src/assets/lorentzian_fit_example.png)
 
-## Width Parameters
+## Parameters
 
-- **Lorentzian**: Uses FWHM (Γ) directly — the value you measure from a spectrum.
-- **Gaussian**: Uses standard deviation (σ). Convert with the helper functions:
+Both `gaussian` and `lorentzian` use consistent parameterization:
+
+| Parameter | Gaussian | Lorentzian |
+|-----------|----------|------------|
+| `A` | Peak amplitude | Peak amplitude |
+| `x₀` | Center position | Center position |
+| Width | `σ` (std dev) | `Γ` (FWHM) |
+| `y₀` | Offset (optional) | Offset (optional) |
+
+### Width Conversion
 
 ```julia
-σ = fwhm_to_sigma(measured_fwhm)   # before fitting
-fitted_fwhm = sigma_to_fwhm(σ)     # after fitting
+fwhm = sigma_to_fwhm(σ)   # Gaussian σ → FWHM
+σ = fwhm_to_sigma(fwhm)   # FWHM → Gaussian σ
+```
+
+### Area Calculation
+
+```julia
+area = gaussian_area(A, σ)    # A × σ × √(2π)
+area = lorentzian_area(A, Γ)  # A × π × Γ / 2
 ```
 
 See the [CurveFit.jl documentation](https://github.com/SciML/CurveFit.jl) for more details on fitting.
