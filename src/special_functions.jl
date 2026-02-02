@@ -104,5 +104,7 @@ Fabry-Pérot cavity transmittance with an absorbing medium as a function of freq
 function cavity_transmittance(p, ν)
     n, α, L, R, ϕ = p
     T = 1 - R
-    @. T^2 * exp(-α * L) / (1 + R^2 * exp(-2 * α * L) - 2 * R * exp(-α * L) * cos(4π * n * L * ν + 2 * ϕ))
+    # Precompute exponential to avoid redundant calculations
+    e = exp(-α * L)
+    @. T^2 * e / (1 + R^2 * e^2 - 2 * R * e * cos(4π * n * L * ν + 2 * ϕ))
 end

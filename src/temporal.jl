@@ -107,10 +107,13 @@ function n_exponentials(n::Int)
         y₀ = p[end]
         y = similar(p, length(t))
         fill!(y, y₀)
+        # Avoid temporary allocations by using explicit loop
         for i in 1:n
             A = p[2i - 1]
             τ = p[2i]
-            @. y += A * exp(-t / τ)
+            for j in eachindex(t)
+                y[j] += A * exp(-t[j] / τ)
+            end
         end
         return y
     end

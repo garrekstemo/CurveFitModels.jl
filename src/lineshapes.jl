@@ -81,7 +81,8 @@ prob = NonlinearCurveFitProblem(model, p0, x, y)
 sol = solve(prob)
 ```
 """
-combine(f1, n1, f2, n2) = (p, x) -> f1(p[1:n1], x) .+ f2(p[n1+1:n1+n2], x)
+# Use @view to avoid allocating array slices on each call
+combine(f1, n1, f2, n2) = (p, x) -> f1(@view(p[1:n1]), x) .+ f2(@view(p[n1+1:n1+n2]), x)
 
 """
     gaussian(p, x)
@@ -207,6 +208,9 @@ function gaussian2d(p, coords)
         return vec(result)
     else
         # coords is a matrix where each row is [x, y]
-        return @. A * exp(-((coords[:, 1] - x₀)^2 / (2σ_x^2) + (coords[:, 2] - y₀)^2 / (2σ_y^2))) + z₀
+        # Use views to avoid allocating column copies
+        cx = @view coords[:, 1]
+        cy = @view coords[:, 2]
+        return @. A * exp(-((cx - x₀)^2 / (2σ_x^2) + (cy - y₀)^2 / (2σ_y^2))) + z₀
     end
 end
