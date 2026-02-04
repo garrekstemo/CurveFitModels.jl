@@ -5,6 +5,9 @@ authors = ["Garrek Stemo <8449000+garrekstemo@users.noreply.github.com>"]
 
 [deps]
 
+[compat]
+julia = "1.10"
+
 [extras]
 CurveFit = "5a033b19-8c74-5913-a970-47c3779ef25c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

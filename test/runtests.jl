@@ -1,9 +1,7 @@
 using Test
 using CurveFit
 using Random
-
-include("../src/CurveFitModels.jl")
-using .CurveFitModels
+using CurveFitModels
 
 Random.seed!(42)
 
@@ -709,6 +707,49 @@ Random.seed!(42)
         y = lorentzian([1.0, 0.0, 1.0], [1e6])
         @test isfinite(y[1])
         @test y[1] > 0
+    end
+
+    @testset "Float32 support" begin
+        x32 = Float32.(0.0:0.1:4.0)
+
+        # Gaussian
+        p = Float32[3.0, 2.0, 0.5]
+        y = gaussian(p, x32)
+        @test eltype(y) == Float32
+
+        # Gaussian with offset
+        y = gaussian(Float32[3.0, 2.0, 0.5, 0.1], x32)
+        @test eltype(y) == Float32
+
+        # Lorentzian
+        y = lorentzian(Float32[2.0, 1.0, 0.5], x32)
+        @test eltype(y) == Float32
+
+        # single_exponential
+        y = single_exponential(Float32[2.0, 0.5], x32)
+        @test eltype(y) == Float32
+
+        # sine
+        y = sine(Float32[1.0, 2.0, 0.0], x32)
+        @test eltype(y) == Float32
+
+        # damped_sine
+        y = damped_sine(Float32[1.0, 2.0, 0.0, 1.0], x32)
+        @test eltype(y) == Float32
+
+        # n_exponentials
+        mono = n_exponentials(1)
+        y = mono(Float32[2.0, 0.5, 0.1], x32)
+        @test eltype(y) == Float32
+
+        # poly
+        y = poly(Float32[1.0, 2.0], x32)
+        @test eltype(y) == Float32
+    end
+
+    @testset "n_exponentials input validation" begin
+        @test_throws ArgumentError n_exponentials(-1)
+        @test_throws ArgumentError n_exponentials(-5)
     end
 
 end

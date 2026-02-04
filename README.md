@@ -6,11 +6,9 @@ All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where
 
 ## Installation
 
-Since this package is not registered, install it directly from GitHub:
-
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/garrekstemo/CurveFitModels.jl")
+Pkg.add("CurveFitModels")
 ```
 
 ## Example

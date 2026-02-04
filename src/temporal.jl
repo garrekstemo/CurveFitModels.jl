@@ -19,8 +19,8 @@ Exponential decay function.
 [https://en.wikipedia.org/wiki/Exponential_decay](https://en.wikipedia.org/wiki/Exponential_decay)
 """
 function single_exponential(p, t)
-    A, τ = p[1:2]
-    y₀ = length(p) >= 3 ? p[3] : 0.0
+    A, τ = p[1], p[2]
+    y₀ = length(p) >= 3 ? p[3] : zero(eltype(p))
     @. A * exp(-t / τ) + y₀
 end
 
@@ -46,8 +46,8 @@ Sinusoidal function.
 [https://en.wikipedia.org/wiki/Sine_wave](https://en.wikipedia.org/wiki/Sine_wave)
 """
 function sine(p, t)
-    A, ω, ϕ = p[1:3]
-    y₀ = length(p) >= 4 ? p[4] : 0.0
+    A, ω, ϕ = p[1], p[2], p[3]
+    y₀ = length(p) >= 4 ? p[4] : zero(eltype(p))
     return @. A * sin(t * ω + ϕ) + y₀
 end
 
@@ -74,8 +74,8 @@ Damped sine function (exponentially decaying sinusoid).
 [https://en.wikipedia.org/wiki/Damping](https://en.wikipedia.org/wiki/Damping)
 """
 function damped_sine(p, t)
-    A, ω, ϕ, τ = p[1:4]
-    y₀ = length(p) >= 5 ? p[5] : 0.0
+    A, ω, ϕ, τ = p[1], p[2], p[3], p[4]
+    y₀ = length(p) >= 5 ? p[5] : zero(eltype(p))
     return @. A * exp(-t / τ) * sin(t * ω + ϕ) + y₀
 end
 
@@ -103,6 +103,7 @@ sol = solve(NonlinearCurveFitProblem(bi_exp, p0, t, y))
 ```
 """
 function n_exponentials(n::Int)
+    n >= 0 || throw(ArgumentError("n must be non-negative, got $n"))
     function model(p, t)
         y₀ = p[end]
         y = similar(p, length(t))

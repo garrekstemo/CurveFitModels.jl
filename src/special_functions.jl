@@ -21,7 +21,7 @@ The real and imaginary parts are `dielectric_real` and `dielectric_imag`, respec
 [https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
 """
 function complex_lorentzian(p, ν)
-    A, ν₀, Γ = p
+    A, ν₀, Γ = p[1], p[2], p[3]
     return @. A / (ν₀^2 - ν^2 - im * Γ * ν)
 end
 
@@ -48,7 +48,7 @@ This is equivalent to `real(complex_lorentzian(p, ν))`.
 [https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
 """
 function dielectric_real(p, ν)
-    A, ν₀, Γ = p
+    A, ν₀, Γ = p[1], p[2], p[3]
     return @. A * (ν₀^2 - ν^2) / ((ν^2 - ν₀^2)^2 + Γ^2 * ν^2)
 end
 
@@ -75,7 +75,7 @@ This is equivalent to `imag(complex_lorentzian(p, ν))`.
 [https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
 """
 function dielectric_imag(p, ν)
-    A, ν₀, Γ = p
+    A, ν₀, Γ = p[1], p[2], p[3]
     return @. A * Γ * ν / ((ν^2 - ν₀^2)^2 + Γ^2 * ν^2)
 end
 
@@ -102,7 +102,7 @@ Fabry-Pérot cavity transmittance with an absorbing medium as a function of freq
 [https://en.wikipedia.org/wiki/Fabry%E2%80%93P%C3%A9rot_interferometer](https://en.wikipedia.org/wiki/Fabry%E2%80%93P%C3%A9rot_interferometer)
 """
 function cavity_transmittance(p, ν)
-    n, α, L, R, ϕ = p
+    n, α, L, R, ϕ = p[1], p[2], p[3], p[4], p[5]
     T = 1 - R
     # Precompute exponential to avoid redundant calculations
     e = exp(-α * L)

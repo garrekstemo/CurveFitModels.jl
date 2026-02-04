@@ -53,7 +53,7 @@ poly([1.0, 2.0, 3.0], [0.0, 1.0, 2.0])  # 1 + 2x + 3x²
 
 Combine with other models for simultaneous baseline fitting:
 ```julia
-model(p, x) = lorentzian(p[1:3], x) .+ poly(p[4:5], x)
+model = combine(lorentzian, 3, poly, 2)
 ```
 """
 poly(p, x) = evalpoly.(x, Ref(Tuple(p)))
@@ -108,8 +108,8 @@ Use `fwhm_to_sigma` and `sigma_to_fwhm` to convert between σ and FWHM.
 [https://en.wikipedia.org/wiki/Gaussian_function](https://en.wikipedia.org/wiki/Gaussian_function)
 """
 function gaussian(p, x)
-    A, x0, σ = p[1:3]
-    y₀ = length(p) >= 4 ? p[4] : 0.0
+    A, x0, σ = p[1], p[2], p[3]
+    y₀ = length(p) >= 4 ? p[4] : zero(eltype(p))
     @. A * exp(-((x - x0)^2) / (2σ^2)) + y₀
 end
 
@@ -137,19 +137,24 @@ The integrated area is `A × π × Γ / 2`.
 [https://en.wikipedia.org/wiki/Cauchy_distribution](https://en.wikipedia.org/wiki/Cauchy_distribution)
 """
 function lorentzian(p, x)
-    A, x0, Γ = p[1:3]
-    y₀ = length(p) >= 4 ? p[4] : 0.0
+    A, x0, Γ = p[1], p[2], p[3]
+    y₀ = length(p) >= 4 ? p[4] : zero(eltype(p))
     @. A / (1 + ((x - x0) / (Γ / 2))^2) + y₀
 end
 
 """
     pseudo_voigt(p, ω)
 
-Pseudo-Voigt profile: a linear combination of Gaussian and Lorentzian functions.
+Pseudo-Voigt profile: a linear combination of area-normalized
+Gaussian and Lorentzian functions.
+
+Note: Unlike `gaussian` and `lorentzian` which use peak-amplitude
+parameterization, `pseudo_voigt` uses area-normalized components.
+The parameter `f₀` scales the total area, not the peak height.
 
 # Arguments
 - `p`: Parameters [f₀, ω₀, σ, α]
-  - `f₀`: Amplitude
+  - `f₀`: Area scaling factor
   - `ω₀`: Center position
   - `σ`: Width parameter (HWHM for Lorentzian component)
   - `α`: Mixing parameter (0 = pure Gaussian, 1 = pure Lorentzian)
@@ -166,7 +171,7 @@ where G and L are normalized Gaussian and Lorentzian functions.
 [https://en.wikipedia.org/wiki/Voigt_profile](https://en.wikipedia.org/wiki/Voigt_profile)
 """
 function pseudo_voigt(p, ω)
-    f_0, ω_0, σ, α = p
+    f_0, ω_0, σ, α = p[1], p[2], p[3], p[4]
     σ_g = σ / sqrt(2 * log(2))
     return @. (1 - α) * f_0 * exp(-(ω - ω_0)^2 / (2 * σ_g^2)) / (σ_g * sqrt(2 * π)) +
         α * f_0 * σ / ((ω - ω_0)^2 + σ^2) / π
@@ -197,20 +202,18 @@ Returns a vector (flattened) for compatibility with CurveFit.jl.
 
 [https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function](https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function)
 """
-function gaussian2d(p, coords)
-    A, x₀, σ_x, y₀, σ_y = p[1:5]
-    z₀ = length(p) >= 6 ? p[6] : 0.0
+function gaussian2d(p, coords::Tuple)
+    A, x₀, σ_x, y₀, σ_y = p[1], p[2], p[3], p[4], p[5]
+    z₀ = length(p) >= 6 ? p[6] : zero(eltype(p))
+    X, Y = coords
+    result = @. A * exp(-((X - x₀)^2 / (2σ_x^2) + (Y - y₀)^2 / (2σ_y^2))) + z₀
+    return vec(result)
+end
 
-    if coords isa Tuple
-        # coords = (X, Y) meshgrid matrices
-        X, Y = coords
-        result = @. A * exp(-((X - x₀)^2 / (2σ_x^2) + (Y - y₀)^2 / (2σ_y^2))) + z₀
-        return vec(result)
-    else
-        # coords is a matrix where each row is [x, y]
-        # Use views to avoid allocating column copies
-        cx = @view coords[:, 1]
-        cy = @view coords[:, 2]
-        return @. A * exp(-((cx - x₀)^2 / (2σ_x^2) + (cy - y₀)^2 / (2σ_y^2))) + z₀
-    end
+function gaussian2d(p, coords::AbstractMatrix)
+    A, x₀, σ_x, y₀, σ_y = p[1], p[2], p[3], p[4], p[5]
+    z₀ = length(p) >= 6 ? p[6] : zero(eltype(p))
+    cx = @view coords[:, 1]
+    cy = @view coords[:, 2]
+    return @. A * exp(-((cx - x₀)^2 / (2σ_x^2) + (cy - y₀)^2 / (2σ_y^2))) + z₀
 end
