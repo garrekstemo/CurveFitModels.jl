@@ -11,13 +11,13 @@ All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where
 
 ## Available Models
 
-**Lineshapes**: `gaussian`, `lorentzian`, `pseudo_voigt`, `power_law`, `logistic`
+**Lineshapes**: `gaussian`, `lorentzian`, `pseudo_voigt`, `power_law`, `logistic`, `gaussian2d`
 
 **Temporal**: `single_exponential`, `stretched_exponential`, `n_exponentials`, `sine`, `damped_sine`
 
 **Oscillator models**: `lorentz_oscillator`, `dielectric_real`, `dielectric_imag`
 
-**Composition**: `poly`, `combine`, `gaussian2d`
+**Utilities**: `poly`, `combine`
 
 ## Installation
 
