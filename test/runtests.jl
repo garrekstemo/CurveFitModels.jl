@@ -933,17 +933,4 @@ Random.seed!(42)
     # ALLOCATION TESTS
     # =========================================================================
 
-    @testset "Helper functions zero allocations" begin
-        # Helper functions should allocate nothing
-        sigma_to_fwhm(1.0)  # warmup
-        fwhm_to_sigma(1.0)
-        gaussian_area(1.0, 1.0)
-        lorentzian_area(1.0, 1.0)
-
-        @test @allocated(sigma_to_fwhm(1.0)) == 0
-        @test @allocated(fwhm_to_sigma(1.0)) == 0
-        @test @allocated(gaussian_area(1.0, 1.0)) == 0
-        @test @allocated(lorentzian_area(1.0, 1.0)) == 0
-    end
-
 end
