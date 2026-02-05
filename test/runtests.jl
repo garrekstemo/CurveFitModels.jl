@@ -8,11 +8,12 @@ Random.seed!(42)
 @testset "CurveFitModels Tests" begin
 
     # =========================================================================
-    # PHYSICAL PROPERTY TESTS
-    # These tests verify mathematical correctness independent of curve fitting
+    # CONSISTENCY CHECKS
+    # Verify mathematical properties: peak values, symmetry, FWHM definitions,
+    # asymptotic behavior, and limiting cases.
     # =========================================================================
 
-    @testset "Gaussian physical properties" begin
+    @testset "Gaussian consistency checks" begin
         A, x0, σ = 3.0, 2.0, 1.0
 
         # Peak amplitude: maximum value occurs at center and equals A
@@ -39,7 +40,7 @@ Random.seed!(42)
         @test gaussian([A, x0, σ], [x0 + 10σ])[1] ≈ 0.0 atol=1e-10
     end
 
-    @testset "Lorentzian physical properties" begin
+    @testset "Lorentzian consistency checks" begin
         A, x0, Γ = 2.0, 1.0, 0.5
 
         # Peak amplitude: maximum value occurs at center and equals A
@@ -66,7 +67,7 @@ Random.seed!(42)
         @test lorentzian([A, x0, Γ], [x0 + 100Γ])[1] > 0  # Still positive, no offset
     end
 
-    @testset "Exponential decay physical properties" begin
+    @testset "Exponential decay consistency checks" begin
         A, τ, y₀ = 2.0, 1.0, 0.5
 
         # Initial value: f(0) = A + y₀
@@ -91,7 +92,7 @@ Random.seed!(42)
         @test single_exponential([-A, τ, y₀], [100τ])[1] ≈ y₀ atol=1e-10
     end
 
-    @testset "Sine physical properties" begin
+    @testset "Sine consistency checks" begin
         A, ω, ϕ, y₀ = 1.5, 2.0, 0.0, 0.5
 
         # Amplitude: max - min = 2A
@@ -117,7 +118,7 @@ Random.seed!(42)
         @test sine([A, ω, 0.0], [0.0])[1] ≈ 0.0
     end
 
-    @testset "Damped sine physical properties" begin
+    @testset "Damped sine consistency checks" begin
         A, ω, ϕ, τ, y₀ = 2.0, 3.0, 0.0, 1.5, 0.1
 
         # Initial value: f(0) = A·sin(ϕ) + y₀
@@ -142,7 +143,7 @@ Random.seed!(42)
         @test damped_sine([A, ω, ϕ, τ], [100τ])[1] ≈ 0.0 atol=1e-6
     end
 
-    @testset "Stretched exponential physical properties" begin
+    @testset "Stretched exponential consistency checks" begin
         A, τ, β, y₀ = 2.0, 1.0, 0.7, 0.5
 
         # Initial value: f(0) = A + y₀
@@ -170,7 +171,7 @@ Random.seed!(42)
         @test stretched_exponential([A, τ, β], [1000.0])[1] ≈ 0.0 atol=1e-10
     end
 
-    @testset "Power law physical properties" begin
+    @testset "Power law consistency checks" begin
         A, n = 2.0, 3.0
 
         # f(1) = A * 1^n = A
@@ -197,7 +198,7 @@ Random.seed!(42)
         @test power_law([1.0, -1.0], [4.0])[1] ≈ 0.25
     end
 
-    @testset "Logistic physical properties" begin
+    @testset "Logistic consistency checks" begin
         L, k, x₀ = 2.0, 3.0, 1.0
 
         # Midpoint: f(x₀) = L/2
@@ -230,7 +231,7 @@ Random.seed!(42)
         @test all(diff(y_neg) .< 0)
     end
 
-    @testset "Lorentz oscillator physical properties" begin
+    @testset "Lorentz oscillator consistency checks" begin
         A, ν₀, Γ = 1000.0, 100.0, 5.0
 
         # At resonance (ν = ν₀): real part crosses zero
@@ -264,7 +265,7 @@ Random.seed!(42)
         @test abs(χ_high) < 1e-4
     end
 
-    @testset "Pseudo-Voigt limiting cases" begin
+    @testset "Pseudo-Voigt consistency checks" begin
         f₀, ω₀, σ = 1.0, 0.0, 1.0
         x = collect(-5.0:0.1:5.0)
 
@@ -290,7 +291,7 @@ Random.seed!(42)
               maximum([y_pv_gauss[center_idx], y_pv_lor[center_idx]])
     end
 
-    @testset "Gaussian 2D physical properties" begin
+    @testset "Gaussian 2D consistency checks" begin
         A, x₀, σ_x, y₀, σ_y, z₀ = 2.0, 0.5, 1.0, -0.3, 1.5, 0.1
 
         # Test with matrix input (alternative to tuple input)
@@ -322,6 +323,7 @@ Random.seed!(42)
     # =========================================================================
     # CURVE FITTING TESTS
     # These tests verify that parameters can be recovered from noisy data
+    # and for compatibility with CurveFit.jl
     # =========================================================================
 
     @testset "single_exponential" begin
@@ -928,9 +930,5 @@ Random.seed!(42)
         @test @inferred(gaussian_area(1.0, 1.0)) isa Float64
         @test @inferred(lorentzian_area(1.0, 1.0)) isa Float64
     end
-
-    # =========================================================================
-    # ALLOCATION TESTS
-    # =========================================================================
 
 end
