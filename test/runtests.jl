@@ -634,6 +634,24 @@ Random.seed!(42)
         @test isapprox(p_fit[2], p_true[2], atol=0.3)
     end
 
+    @testset "poly" begin
+        # Fit a quadratic polynomial: c₀ + c₁x + c₂x²
+        x = collect(-3.0:0.2:3.0)
+        p_true = [1.5, -0.8, 0.3]  # [c₀, c₁, c₂]
+        y_true = poly(p_true, x)
+        noise = 0.02 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [1.0, -0.5, 0.2]
+        prob = NonlinearCurveFitProblem(poly, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.2)
+        @test isapprox(p_fit[2], p_true[2], atol=0.2)
+        @test isapprox(p_fit[3], p_true[3], atol=0.2)
+    end
+
     @testset "lorentz_oscillator" begin
         # Verify that dielectric_real and dielectric_imag are the real/imag parts
         p = [1.0, 100.0, 10.0]  # A, ν₀, Γ
@@ -686,6 +704,27 @@ Random.seed!(42)
 
         p0 = [400.0, 98.0, 4.0]
         prob = NonlinearCurveFitProblem(dielectric_imag, p0, ν, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        # Center frequency should be well-recovered
+        @test isapprox(p_fit[2], p_true[2], atol=1.0)
+        # Linewidth should be approximately correct
+        @test isapprox(p_fit[3], p_true[3], atol=1.0)
+    end
+
+    @testset "dielectric_real fitting" begin
+        # Fit dispersive lineshape using dielectric_real
+        # Use finer grid and lower noise since dispersive lineshape is more sensitive
+        ν = collect(80.0:0.2:120.0)
+        p_true = [500.0, 100.0, 3.0]  # [A, ν₀, Γ]
+        y_true = dielectric_real(p_true, ν)
+        rng = MersenneTwister(42)
+        noise = 0.001 * randn(rng, length(ν))
+        y_data = y_true .+ noise
+
+        p0 = [450.0, 99.0, 3.5]
+        prob = NonlinearCurveFitProblem(dielectric_real, p0, ν, y_data)
         sol = solve(prob)
         p_fit = coef(sol)
 
