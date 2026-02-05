@@ -90,3 +90,7 @@ area = lorentzian_area(A, Γ)  # A × π × Γ / 2
 ```
 
 See the [documentation](https://garrekstemo.github.io/CurveFitModels.jl/stable) for full details on all functions.
+
+## Acknowledgments
+
+Development of this package was assisted by Claude (Anthropic). All code has been reviewed and tested by the maintainer.
