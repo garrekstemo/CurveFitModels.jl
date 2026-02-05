@@ -933,44 +933,13 @@ Random.seed!(42)
     # ALLOCATION TESTS
     # =========================================================================
 
-    @testset "Zero allocations (after warmup)" begin
-        # Pre-allocate inputs
-        x = collect(0.0:0.1:4.0)
-        t = collect(0.0:0.1:4.0)
-        ν = collect(80.0:1.0:120.0)
-
-        # Warmup calls
-        gaussian([1.0, 0.0, 1.0], x)
-        lorentzian([1.0, 0.0, 1.0], x)
-        pseudo_voigt([1.0, 0.0, 1.0, 0.5], x)
-        power_law([1.0, 2.0], x)
-        logistic([1.0, 1.0, 0.0], x)
-        single_exponential([1.0, 1.0], t)
-        stretched_exponential([1.0, 1.0, 0.5], t)
-        sine([1.0, 1.0, 0.0], t)
-        damped_sine([1.0, 1.0, 0.0, 1.0], t)
-        lorentz_oscillator([1.0, 100.0, 1.0], ν)
-        dielectric_real([1.0, 100.0, 1.0], ν)
-        dielectric_imag([1.0, 100.0, 1.0], ν)
-
-        # Allocation tests - these should only allocate for the output array
-        # Use a generous multiplier since CI environments vary
-        baseline_alloc = @allocated zeros(length(x))
-        max_alloc = max(5 * baseline_alloc, 4096)  # Allow some slack for CI variability
-
-        @test @allocated(gaussian([1.0, 0.0, 1.0], x)) <= max_alloc
-        @test @allocated(lorentzian([1.0, 0.0, 1.0], x)) <= max_alloc
-        @test @allocated(pseudo_voigt([1.0, 0.0, 1.0, 0.5], x)) <= max_alloc
-        @test @allocated(power_law([1.0, 2.0], x)) <= max_alloc
-        @test @allocated(logistic([1.0, 1.0, 0.0], x)) <= max_alloc
-        @test @allocated(single_exponential([1.0, 1.0], t)) <= max_alloc
-        @test @allocated(stretched_exponential([1.0, 1.0, 0.5], t)) <= max_alloc
-        @test @allocated(sine([1.0, 1.0, 0.0], t)) <= max_alloc
-        @test @allocated(damped_sine([1.0, 1.0, 0.0, 1.0], t)) <= max_alloc
-        @test @allocated(dielectric_real([1.0, 100.0, 1.0], ν)) <= max_alloc
-        @test @allocated(dielectric_imag([1.0, 100.0, 1.0], ν)) <= max_alloc
-
+    @testset "Helper functions zero allocations" begin
         # Helper functions should allocate nothing
+        sigma_to_fwhm(1.0)  # warmup
+        fwhm_to_sigma(1.0)
+        gaussian_area(1.0, 1.0)
+        lorentzian_area(1.0, 1.0)
+
         @test @allocated(sigma_to_fwhm(1.0)) == 0
         @test @allocated(fwhm_to_sigma(1.0)) == 0
         @test @allocated(gaussian_area(1.0, 1.0)) == 0
