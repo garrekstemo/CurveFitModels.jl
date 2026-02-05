@@ -1,6 +1,6 @@
-# General Functions
+# Model Functions
 
-Common functions and lineshapes for spectroscopy.
+Lineshapes, temporal models, and oscillator functions for curve fitting.
 
 
 ```@autodocs

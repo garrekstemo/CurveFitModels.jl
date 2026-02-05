@@ -1,6 +1,7 @@
 module CurveFitModels
 
 export single_exponential,
+       stretched_exponential,
        n_exponentials,
        gaussian,
        gaussian_area,
@@ -14,13 +15,13 @@ export single_exponential,
        sine,
        damped_sine,
        pseudo_voigt,
-       complex_lorentzian,
+       power_law,
+       logistic,
+       lorentz_oscillator,
        dielectric_real,
-       dielectric_imag,
-       cavity_transmittance
+       dielectric_imag
 
 include("lineshapes.jl")
 include("temporal.jl")
-include("special_functions.jl")
 
 end # module

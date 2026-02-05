@@ -7,7 +7,6 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Model Functions" => "functions.md",
-        "Special Functions" => "specialfunctions.md",
     ],
 )
 

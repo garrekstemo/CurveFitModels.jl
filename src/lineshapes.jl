@@ -178,6 +178,59 @@ function pseudo_voigt(p, ω)
 end
 
 """
+    power_law(p, x)
+
+Power law function for curve fitting.
+
+# Arguments
+- `p`: Parameters [A, n] or [A, n, y₀]
+  - `A`: Amplitude (prefactor)
+  - `n`: Exponent
+  - `y₀`: Vertical offset (default: 0.0)
+- `x`: Independent variable
+
+```math
+\\begin{aligned}
+    f(x) = A x^n + y_0
+\\end{aligned}
+```
+
+[https://en.wikipedia.org/wiki/Power_law](https://en.wikipedia.org/wiki/Power_law)
+"""
+function power_law(p, x)
+    A, n = p[1], p[2]
+    y₀ = length(p) >= 3 ? p[3] : zero(eltype(p))
+    @. A * x^n + y₀
+end
+
+"""
+    logistic(p, x)
+
+Logistic (sigmoid) function for curve fitting.
+
+# Arguments
+- `p`: Parameters [L, k, x₀] or [L, k, x₀, y₀]
+  - `L`: Maximum value (supremum of the curve)
+  - `k`: Steepness of the curve
+  - `x₀`: Midpoint (x-value of the sigmoid's center)
+  - `y₀`: Vertical offset (default: 0.0)
+- `x`: Independent variable
+
+```math
+\\begin{aligned}
+    f(x) = \\frac{L}{1 + e^{-k(x - x_0)}} + y_0
+\\end{aligned}
+```
+
+[https://en.wikipedia.org/wiki/Logistic_function](https://en.wikipedia.org/wiki/Logistic_function)
+"""
+function logistic(p, x)
+    L, k, x₀ = p[1], p[2], p[3]
+    y₀ = length(p) >= 4 ? p[4] : zero(eltype(p))
+    @. L / (1 + exp(-k * (x - x₀))) + y₀
+end
+
+"""
     gaussian2d(p, coords)
 
 Two-dimensional Gaussian function for curve fitting.
@@ -216,4 +269,85 @@ function gaussian2d(p, coords::AbstractMatrix)
     cx = @view coords[:, 1]
     cy = @view coords[:, 2]
     return @. A * exp(-((cx - x₀)^2 / (2σ_x^2) + (cy - y₀)^2 / (2σ_y^2))) + z₀
+end
+
+"""
+    lorentz_oscillator(p, ν)
+
+Complex Lorentzian susceptibility function (Lorentz oscillator model).
+
+# Arguments
+- `p`: Parameters [A, ν₀, Γ]
+  - `A`: Oscillator strength
+  - `ν₀`: Resonance frequency
+  - `Γ`: Linewidth (damping)
+- `ν`: Frequency (independent variable)
+
+```math
+\\begin{aligned}
+\\chi(\\nu) = \\frac{A}{\\nu_0^2 - \\nu^2 - i\\Gamma\\nu}
+\\end{aligned}
+```
+
+The real and imaginary parts are `dielectric_real` and `dielectric_imag`, respectively.
+
+[https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
+"""
+function lorentz_oscillator(p, ν)
+    A, ν₀, Γ = p[1], p[2], p[3]
+    return @. A / (ν₀^2 - ν^2 - im * Γ * ν)
+end
+
+"""
+    dielectric_real(p, ν)
+
+Real part of complex Lorentzian susceptibility (Lorentz oscillator model).
+
+This is equivalent to `real(lorentz_oscillator(p, ν))`.
+
+# Arguments
+- `p`: Parameters [A, ν₀, Γ]
+  - `A`: Oscillator strength
+  - `ν₀`: Resonance frequency
+  - `Γ`: Linewidth (damping)
+- `ν`: Frequency (independent variable)
+
+```math
+\\begin{aligned}
+\\chi_1(\\nu) = \\text{Re}\\left[\\frac{A}{\\nu_0^2 - \\nu^2 - i\\Gamma\\nu}\\right] = \\frac{A (\\nu_0^2 - \\nu^2)}{(\\nu_0^2 - \\nu^2)^2 + (\\Gamma\\nu)^2}
+\\end{aligned}
+```
+
+[https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
+"""
+function dielectric_real(p, ν)
+    A, ν₀, Γ = p[1], p[2], p[3]
+    return @. A * (ν₀^2 - ν^2) / ((ν^2 - ν₀^2)^2 + Γ^2 * ν^2)
+end
+
+"""
+    dielectric_imag(p, ν)
+
+Imaginary part of complex Lorentzian susceptibility (Lorentz oscillator model).
+
+This is equivalent to `imag(lorentz_oscillator(p, ν))`.
+
+# Arguments
+- `p`: Parameters [A, ν₀, Γ]
+  - `A`: Oscillator strength
+  - `ν₀`: Resonance frequency
+  - `Γ`: Linewidth (damping)
+- `ν`: Frequency (independent variable)
+
+```math
+\\begin{aligned}
+\\chi_2(\\nu) = \\text{Im}\\left[\\frac{A}{\\nu_0^2 - \\nu^2 - i\\Gamma\\nu}\\right] = \\frac{A \\Gamma \\nu}{(\\nu_0^2 - \\nu^2)^2 + (\\Gamma\\nu)^2}
+\\end{aligned}
+```
+
+[https://en.wikipedia.org/wiki/Lorentz_oscillator_model](https://en.wikipedia.org/wiki/Lorentz_oscillator_model)
+"""
+function dielectric_imag(p, ν)
+    A, ν₀, Γ = p[1], p[2], p[3]
+    return @. A * Γ * ν / ((ν^2 - ν₀^2)^2 + Γ^2 * ν^2)
 end

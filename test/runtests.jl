@@ -142,13 +142,101 @@ Random.seed!(42)
         @test damped_sine([A, ω, ϕ, τ], [100τ])[1] ≈ 0.0 atol=1e-6
     end
 
-    @testset "Complex Lorentzian physical properties" begin
+    @testset "Stretched exponential physical properties" begin
+        A, τ, β, y₀ = 2.0, 1.0, 0.7, 0.5
+
+        # Initial value: f(0) = A + y₀
+        @test stretched_exponential([A, τ, β, y₀], [0.0])[1] ≈ A + y₀
+
+        # Asymptotic value: f(∞) → y₀
+        @test stretched_exponential([A, τ, β, y₀], [1000.0])[1] ≈ y₀ atol=1e-10
+
+        # β = 1 reduces to single exponential
+        t = collect(0.0:0.1:5.0)
+        y_stretched = stretched_exponential([A, τ, 1.0, y₀], t)
+        y_single = single_exponential([A, τ, y₀], t)
+        @test y_stretched ≈ y_single
+
+        # At t = τ with β = 1: f(τ) = A/e + y₀
+        @test stretched_exponential([A, τ, 1.0, y₀], [τ])[1] ≈ A / ℯ + y₀ rtol=1e-10
+
+        # Slower decay for β < 1: at t > τ, stretched > single exponential (above offset)
+        val_stretched = stretched_exponential([A, τ, 0.5], [2τ])[1]
+        val_single = single_exponential([A, τ], [2τ])[1]
+        @test val_stretched > val_single
+
+        # 3-parameter form defaults to y₀ = 0
+        @test stretched_exponential([A, τ, β], [0.0])[1] ≈ A
+        @test stretched_exponential([A, τ, β], [1000.0])[1] ≈ 0.0 atol=1e-10
+    end
+
+    @testset "Power law physical properties" begin
+        A, n = 2.0, 3.0
+
+        # f(1) = A * 1^n = A
+        @test power_law([A, n], [1.0])[1] ≈ A
+
+        # f(0) = 0 for positive n
+        @test power_law([A, n], [0.0])[1] ≈ 0.0
+
+        # Known value: A * x^n
+        @test power_law([A, n], [2.0])[1] ≈ A * 2.0^n
+
+        # With offset
+        y₀ = 0.5
+        @test power_law([A, n, y₀], [1.0])[1] ≈ A + y₀
+        @test power_law([A, n, y₀], [0.0])[1] ≈ y₀
+
+        # n = 1 is linear
+        @test power_law([3.0, 1.0], [5.0])[1] ≈ 15.0
+
+        # n = 0 is constant
+        @test power_law([3.0, 0.0], [5.0])[1] ≈ 3.0
+
+        # n = -1 is inverse
+        @test power_law([1.0, -1.0], [4.0])[1] ≈ 0.25
+    end
+
+    @testset "Logistic physical properties" begin
+        L, k, x₀ = 2.0, 3.0, 1.0
+
+        # Midpoint: f(x₀) = L/2
+        @test logistic([L, k, x₀], [x₀])[1] ≈ L / 2
+
+        # Asymptotic limits
+        @test logistic([L, k, x₀], [100.0])[1] ≈ L atol=1e-10
+        @test logistic([L, k, x₀], [-100.0])[1] ≈ 0.0 atol=1e-10
+
+        # With offset
+        y₀ = 0.5
+        @test logistic([L, k, x₀, y₀], [x₀])[1] ≈ L / 2 + y₀
+        @test logistic([L, k, x₀, y₀], [100.0])[1] ≈ L + y₀ atol=1e-10
+        @test logistic([L, k, x₀, y₀], [-100.0])[1] ≈ y₀ atol=1e-10
+
+        # Monotonically increasing for positive k
+        x = collect(-5.0:0.1:7.0)
+        y = logistic([L, k, x₀], x)
+        @test all(diff(y) .> 0)
+
+        # Symmetry about midpoint: f(x₀ + Δ) + f(x₀ - Δ) = L
+        Δ = 0.5
+        @test logistic([L, k, x₀], [x₀ + Δ])[1] + logistic([L, k, x₀], [x₀ - Δ])[1] ≈ L
+
+        # k = 0 gives constant L/2
+        @test logistic([L, 0.0, x₀], [0.0])[1] ≈ L / 2
+
+        # Negative k flips the curve (monotonically decreasing)
+        y_neg = logistic([L, -k, x₀], x)
+        @test all(diff(y_neg) .< 0)
+    end
+
+    @testset "Lorentz oscillator physical properties" begin
         A, ν₀, Γ = 1000.0, 100.0, 5.0
 
         # At resonance (ν = ν₀): real part crosses zero
         # χ = A / (ν₀² - ν² - i·Γ·ν) at ν = ν₀ gives χ = A / (-i·Γ·ν₀)
         # Real part = 0, Imaginary part = -A / (Γ·ν₀)
-        χ_at_res = complex_lorentzian([A, ν₀, Γ], [ν₀])[1]
+        χ_at_res = lorentz_oscillator([A, ν₀, Γ], [ν₀])[1]
         @test real(χ_at_res) ≈ 0.0 atol=1e-10
         @test imag(χ_at_res) ≈ A / (Γ * ν₀) rtol=1e-10
 
@@ -169,62 +257,11 @@ Random.seed!(42)
         @test ν_range[idx_max] ≈ ν₀ atol=5.0
 
         # Low frequency limit: χ(0) = A / ν₀²
-        @test complex_lorentzian([A, ν₀, Γ], [0.0])[1] ≈ A / ν₀^2
+        @test lorentz_oscillator([A, ν₀, Γ], [0.0])[1] ≈ A / ν₀^2
 
         # High frequency limit: χ → 0 as ν → ∞
-        χ_high = complex_lorentzian([A, ν₀, Γ], [10000.0])[1]
+        χ_high = lorentz_oscillator([A, ν₀, Γ], [10000.0])[1]
         @test abs(χ_high) < 1e-4
-    end
-
-    @testset "Cavity transmittance physical properties" begin
-        # Empty cavity (no absorption): periodic Airy function
-        n, α, L, R, ϕ = 1.0, 0.0, 1.0, 0.9, 0.0
-
-        # At resonance, transmittance should be maximum
-        # Resonance condition: 4π·n·L·ν = 2π·m for integer m
-        # For L=1, n=1: ν_res = m/2
-        ν_res = 0.5  # First resonance
-        T_res = cavity_transmittance([n, α, L, R, ϕ], [ν_res])[1]
-
-        # Off resonance (halfway between resonances)
-        ν_off = 0.25
-        T_off = cavity_transmittance([n, α, L, R, ϕ], [ν_off])[1]
-
-        # Peak transmittance > off-resonance transmittance
-        @test T_res > T_off
-
-        # Transmittance is bounded: 0 ≤ T ≤ 1
-        ν_range = collect(0.0:0.01:2.0)
-        T_range = cavity_transmittance([n, α, L, R, ϕ], ν_range)
-        @test all(T_range .>= 0)
-        @test all(T_range .<= 1)
-
-        # For lossless cavity (α=0), peak transmittance approaches 1
-        # T_max = (1-R)² / (1-R)² = 1 when α=0 at resonance
-        @test T_res ≈ 1.0 rtol=0.01
-
-        # With absorption, peak transmittance decreases
-        α_absorb = 0.5
-        T_res_abs = cavity_transmittance([n, α_absorb, L, R, ϕ], [ν_res])[1]
-        @test T_res_abs < T_res
-
-        # Higher reflectance → higher finesse → sharper peaks
-        R_high = 0.99
-        R_low = 0.5
-        # Check that high-R cavity has sharper contrast
-        T_res_high = cavity_transmittance([n, 0.0, L, R_high, ϕ], [ν_res])[1]
-        T_off_high = cavity_transmittance([n, 0.0, L, R_high, ϕ], [ν_off])[1]
-        T_res_low = cavity_transmittance([n, 0.0, L, R_low, ϕ], [ν_res])[1]
-        T_off_low = cavity_transmittance([n, 0.0, L, R_low, ϕ], [ν_off])[1]
-        contrast_high = T_res_high / T_off_high
-        contrast_low = T_res_low / T_off_low
-        @test contrast_high > contrast_low
-
-        # Free spectral range: peaks separated by FSR = 1/(2nL)
-        FSR = 1 / (2 * n * L)
-        ν_res2 = ν_res + FSR
-        T_res2 = cavity_transmittance([n, α, L, R, ϕ], [ν_res2])[1]
-        @test T_res2 ≈ T_res rtol=0.01
     end
 
     @testset "Pseudo-Voigt limiting cases" begin
@@ -388,6 +425,25 @@ Random.seed!(42)
         end
     end
 
+    @testset "stretched_exponential" begin
+        # Start at t > 0 to avoid derivative singularity at t=0 for β < 1
+        rng = Random.MersenneTwister(99)
+        t = collect(0.01:0.05:10.0)
+        p_true = [2.0, 1.0, 0.8, 0.1]  # [A, τ, β, y₀]
+        y_true = stretched_exponential(p_true, t)
+        noise = 0.01 * randn(rng, length(t))
+        y_data = y_true .+ noise
+
+        p0 = [2.2, 1.2, 0.9, 0.05]
+        prob = NonlinearCurveFitProblem(stretched_exponential, p0, t, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.5)
+        @test isapprox(p_fit[4], p_true[4], atol=0.2)
+        @test sqrt(rss(sol) / length(t)) < 0.05
+    end
+
     @testset "gaussian" begin
         # True parameters: A=3.0, x0=2.0, σ=0.5, y₀=0.2
         x = collect(-1.0:0.1:5.0)
@@ -509,6 +565,41 @@ Random.seed!(42)
         @test isapprox(p_fit[4], p_true[4], atol=0.2)
     end
 
+    @testset "power_law" begin
+        x = collect(0.5:0.1:5.0)
+        p_true = [2.0, 1.5, 0.3]  # [A, n, y₀]
+        y_true = power_law(p_true, x)
+        noise = 0.05 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [1.5, 1.2, 0.0]
+        prob = NonlinearCurveFitProblem(power_law, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.3)
+        @test isapprox(p_fit[2], p_true[2], atol=0.3)
+        @test isapprox(p_fit[3], p_true[3], atol=0.3)
+    end
+
+    @testset "logistic" begin
+        x = collect(-5.0:0.1:7.0)
+        p_true = [2.0, 1.5, 1.0, 0.1]  # [L, k, x₀, y₀]
+        y_true = logistic(p_true, x)
+        noise = 0.02 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [1.8, 1.2, 0.8, 0.0]
+        prob = NonlinearCurveFitProblem(logistic, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.3)
+        @test isapprox(p_fit[2], p_true[2], atol=0.3)
+        @test isapprox(p_fit[3], p_true[3], atol=0.3)
+        @test isapprox(p_fit[4], p_true[4], atol=0.2)
+    end
+
     @testset "sine" begin
         # True parameters: A=1.5, ω=2.0, ϕ=0.5, y₀=0.2
         t = collect(0.0:0.05:4π)
@@ -543,12 +634,12 @@ Random.seed!(42)
         @test isapprox(p_fit[2], p_true[2], atol=0.3)
     end
 
-    @testset "complex_lorentzian" begin
+    @testset "lorentz_oscillator" begin
         # Verify that dielectric_real and dielectric_imag are the real/imag parts
         p = [1.0, 100.0, 10.0]  # A, ν₀, Γ
         ν = collect(80.0:5.0:120.0)
 
-        χ_complex = complex_lorentzian(p, ν)
+        χ_complex = lorentz_oscillator(p, ν)
         χ_real = dielectric_real(p, ν)
         χ_imag = dielectric_imag(p, ν)
 
@@ -585,24 +676,6 @@ Random.seed!(42)
         @test isapprox(p_fit[5], p_true[5], atol=0.3)
     end
 
-    @testset "cavity_transmittance fitting" begin
-        # Fit cavity parameters from transmittance spectrum
-        ν = collect(0.0:0.005:2.0)
-        p_true = [1.0, 0.0, 1.0, 0.9, 0.0]  # [n, α, L, R, ϕ]
-        T_true = cavity_transmittance(p_true, ν)
-        noise = 0.01 * randn(length(ν))
-        T_data = clamp.(T_true .+ noise, 0.0, 1.0)  # Keep in valid range
-
-        # Fit reflectance (keeping other params fixed for stability)
-        model(p, x) = cavity_transmittance([1.0, 0.0, 1.0, p[1], 0.0], x)
-        p0 = [0.85]
-        prob = NonlinearCurveFitProblem(model, p0, ν, T_data)
-        sol = solve(prob)
-        R_fit = coef(sol)[1]
-
-        @test isapprox(R_fit, p_true[4], atol=0.05)
-    end
-
     @testset "dielectric_imag fitting" begin
         # Fit absorption spectrum using dielectric_imag (Lorentz oscillator)
         ν = collect(80.0:0.5:120.0)
@@ -631,13 +704,15 @@ Random.seed!(42)
         @test length(gaussian([1.0, 0.0, 1.0], [0.0])) == 1
         @test length(lorentzian([1.0, 0.0, 1.0], [0.0])) == 1
         @test length(single_exponential([1.0, 1.0], [0.0])) == 1
+        @test length(stretched_exponential([1.0, 1.0, 0.5], [0.0])) == 1
         @test length(sine([1.0, 1.0, 0.0], [0.0])) == 1
         @test length(damped_sine([1.0, 1.0, 0.0, 1.0], [0.0])) == 1
         @test length(pseudo_voigt([1.0, 0.0, 1.0, 0.5], [0.0])) == 1
-        @test length(complex_lorentzian([1.0, 100.0, 1.0], [100.0])) == 1
+        @test length(power_law([1.0, 2.0], [1.0])) == 1
+        @test length(logistic([1.0, 1.0, 0.0], [0.0])) == 1
+        @test length(lorentz_oscillator([1.0, 100.0, 1.0], [100.0])) == 1
         @test length(dielectric_real([1.0, 100.0, 1.0], [100.0])) == 1
         @test length(dielectric_imag([1.0, 100.0, 1.0], [100.0])) == 1
-        @test length(cavity_transmittance([1.0, 0.0, 1.0, 0.9, 0.0], [0.5])) == 1
         @test length(poly([1.0, 2.0], [0.0])) == 1
     end
 
@@ -646,6 +721,9 @@ Random.seed!(42)
         @test length(gaussian([1.0, 0.0, 1.0], Float64[])) == 0
         @test length(lorentzian([1.0, 0.0, 1.0], Float64[])) == 0
         @test length(single_exponential([1.0, 1.0], Float64[])) == 0
+        @test length(stretched_exponential([1.0, 1.0, 0.5], Float64[])) == 0
+        @test length(power_law([1.0, 2.0], Float64[])) == 0
+        @test length(logistic([1.0, 1.0, 0.0], Float64[])) == 0
     end
 
     @testset "poly higher degrees" begin
@@ -729,6 +807,10 @@ Random.seed!(42)
         y = single_exponential(Float32[2.0, 0.5], x32)
         @test eltype(y) == Float32
 
+        # stretched_exponential
+        y = stretched_exponential(Float32[2.0, 0.5, 0.7], x32)
+        @test eltype(y) == Float32
+
         # sine
         y = sine(Float32[1.0, 2.0, 0.0], x32)
         @test eltype(y) == Float32
@@ -744,6 +826,15 @@ Random.seed!(42)
 
         # poly
         y = poly(Float32[1.0, 2.0], x32)
+        @test eltype(y) == Float32
+
+        # power_law
+        x32_pos = Float32.(0.1:0.1:4.0)
+        y = power_law(Float32[2.0, 1.5], x32_pos)
+        @test eltype(y) == Float32
+
+        # logistic
+        y = logistic(Float32[1.0, 1.0, 0.0], x32)
         @test eltype(y) == Float32
     end
 

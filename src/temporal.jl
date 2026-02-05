@@ -80,6 +80,36 @@ function damped_sine(p, t)
 end
 
 """
+    stretched_exponential(p, t)
+
+Stretched exponential (Kohlrausch-Williams-Watts) decay function.
+
+# Arguments
+- `p`: Parameters [A, τ, β] or [A, τ, β, y₀]
+  - `A`: Amplitude
+  - `τ`: Characteristic time constant
+  - `β`: Stretching exponent (0 < β ≤ 1)
+  - `y₀`: Vertical offset (default: 0.0)
+- `t`: Independent variable (time)
+
+```math
+\\begin{aligned}
+    f(t) = A \\exp\\left(-\\left(\\frac{t}{\\tau}\\right)^\\beta\\right) + y_0
+\\end{aligned}
+```
+
+When β = 1, this reduces to a single exponential decay.
+When β < 1, the decay is slower than exponential at long times.
+
+[https://en.wikipedia.org/wiki/Stretched_exponential_function](https://en.wikipedia.org/wiki/Stretched_exponential_function)
+"""
+function stretched_exponential(p, t)
+    A, τ, β = p[1], p[2], p[3]
+    y₀ = length(p) >= 4 ? p[4] : zero(eltype(p))
+    @. A * exp(-(t / τ)^β) + y₀
+end
+
+"""
     n_exponentials(n::Int)
 
 Generate a model function for a sum of `n` exponential decays.
