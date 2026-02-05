@@ -81,7 +81,6 @@ prob = NonlinearCurveFitProblem(model, p0, x, y)
 sol = solve(prob)
 ```
 """
-# Use @view to avoid allocating array slices on each call
 combine(f1, n1, f2, n2) = (p, x) -> f1(@view(p[1:n1]), x) .+ f2(@view(p[n1+1:n1+n2]), x)
 
 """

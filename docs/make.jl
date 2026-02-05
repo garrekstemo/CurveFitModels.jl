@@ -6,7 +6,9 @@ makedocs(;
     modules = [CurveFitModels],
     pages = [
         "Home" => "index.md",
-        "Model Functions" => "functions.md",
+        "Lineshapes" => "lineshapes.md",
+        "Temporal" => "temporal.md",
+        "Utilities" => "utilities.md",
     ],
 )
 

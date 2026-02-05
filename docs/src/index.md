@@ -1,43 +1,27 @@
-# CurveFitModels.jl Documentation
+# CurveFitModels.jl
 
-A Julia package containing model functions for curve fitting with [CurveFit.jl](https://github.com/SciML/CurveFit.jl).
+A Julia package providing model functions for curve fitting with [CurveFit.jl](https://github.com/SciML/CurveFit.jl). Originally developed with spectroscopy applications in mind, but useful for any nonlinear curve fitting task.
 
 All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where parameters come first.
 
-## Parameters
+## Available Models
 
-Both `gaussian` and `lorentzian` use consistent parameterization:
+**Lineshapes**: [`gaussian`](@ref), [`lorentzian`](@ref), [`pseudo_voigt`](@ref), [`power_law`](@ref), [`logistic`](@ref), [`gaussian2d`](@ref)
 
-| Parameter | Gaussian | Lorentzian |
-|-----------|----------|------------|
-| `A` | Peak amplitude | Peak amplitude |
-| `x₀` | Center position | Center position |
-| Width | `σ` (std dev) | `Γ` (FWHM) |
-| `y₀` | Offset (optional) | Offset (optional) |
+**Temporal**: [`single_exponential`](@ref), [`stretched_exponential`](@ref), [`n_exponentials`](@ref), [`sine`](@ref), [`damped_sine`](@ref)
 
-Helper functions:
+**Oscillator models**: [`lorentz_oscillator`](@ref), [`dielectric_real`](@ref), [`dielectric_imag`](@ref)
 
-```julia
-fwhm = sigma_to_fwhm(σ)       # Gaussian σ → FWHM
-σ = fwhm_to_sigma(fwhm)       # FWHM → Gaussian σ
-area = gaussian_area(A, σ)    # A × σ × √(2π)
-area = lorentzian_area(A, Γ)  # A × π × Γ / 2
-```
+**Utilities**: [`poly`](@ref), [`combine`](@ref)
 
-## Model Composition
-
-Combine models with polynomial baselines for simultaneous fitting:
+## Installation
 
 ```julia
-# poly(p, x) evaluates c₀ + c₁x + c₂x² + ...
-model = combine(lorentzian, 3, poly, 2)  # lorentzian + linear baseline
-
-p0 = [A, x0, Γ, c0, c1]  # peak params + baseline params
-prob = NonlinearCurveFitProblem(model, p0, x, y)
-sol = solve(prob)
+using Pkg
+Pkg.add("CurveFitModels")
 ```
 
-## Example Usage
+## Example
 
 Fit a Lorentzian to a molecular absorption peak:
 
@@ -60,3 +44,28 @@ A, ν₀, Γ = sol.u
 ```
 
 ![Lorentzian fit example](assets/lorentzian_fit_example.png)
+
+## Model Composition
+
+Combine models with polynomial baselines for simultaneous fitting:
+
+```julia
+# poly(p, x) evaluates c₀ + c₁x + c₂x² + ...
+model = combine(lorentzian, 3, poly, 2)  # lorentzian + linear baseline
+
+p0 = [A, x0, Γ, c0, c1]  # peak params + baseline params
+prob = NonlinearCurveFitProblem(model, p0, x, y)
+sol = solve(prob)
+```
+
+## Helper Functions
+
+```julia
+# Width conversion
+fwhm = sigma_to_fwhm(σ)   # Gaussian σ → FWHM
+σ = fwhm_to_sigma(fwhm)   # FWHM → Gaussian σ
+
+# Area calculation
+area = gaussian_area(A, σ)    # A × σ × √(2π)
+area = lorentzian_area(A, Γ)  # A × π × Γ / 2
+```
