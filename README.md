@@ -93,4 +93,4 @@ See the [documentation](https://garrekstemo.github.io/CurveFitModels.jl/stable) 
 
 ## Acknowledgments
 
-Development of this package was assisted by Claude (Anthropic). All code has been reviewed and tested by the maintainer.
+Claude (Anthropic) assisted with development.
