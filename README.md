@@ -5,9 +5,19 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://garrekstemo.github.io/CurveFitModels.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://garrekstemo.github.io/CurveFitModels.jl/dev)
 
-A Julia package containing model functions for curve fitting with [CurveFit.jl](https://github.com/SciML/CurveFit.jl).
+A Julia package providing model functions for curve fitting with [CurveFit.jl](https://github.com/SciML/CurveFit.jl). Originally developed with spectroscopy applications in mind, but useful for any nonlinear curve fitting task.
 
 All model functions follow the CurveFit.jl convention: `fn(parameters, x)` where parameters come first.
+
+## Available Models
+
+**Lineshapes**: `gaussian`, `lorentzian`, `pseudo_voigt`, `power_law`, `logistic`
+
+**Temporal**: `single_exponential`, `stretched_exponential`, `n_exponentials`, `sine`, `damped_sine`
+
+**Oscillator models**: `lorentz_oscillator`, `dielectric_real`, `dielectric_imag`
+
+**Composition**: `poly`, `combine`, `gaussian2d`
 
 ## Installation
 
@@ -54,31 +64,6 @@ fig
 
 ![Lorentzian fit example](docs/src/assets/lorentzian_fit_example.png)
 
-## Parameters
-
-Both `gaussian` and `lorentzian` use consistent parameterization:
-
-| Parameter | Gaussian | Lorentzian |
-|-----------|----------|------------|
-| `A` | Peak amplitude | Peak amplitude |
-| `x₀` | Center position | Center position |
-| Width | `σ` (std dev) | `Γ` (FWHM) |
-| `y₀` | Offset (optional) | Offset (optional) |
-
-### Width Conversion
-
-```julia
-fwhm = sigma_to_fwhm(σ)   # Gaussian σ → FWHM
-σ = fwhm_to_sigma(fwhm)   # FWHM → Gaussian σ
-```
-
-### Area Calculation
-
-```julia
-area = gaussian_area(A, σ)    # A × σ × √(2π)
-area = lorentzian_area(A, Γ)  # A × π × Γ / 2
-```
-
 ## Model Composition
 
 Combine models with polynomial baselines for simultaneous fitting:
@@ -92,5 +77,16 @@ prob = NonlinearCurveFitProblem(model, p0, x, y)
 sol = solve(prob)
 ```
 
-See the [CurveFit.jl documentation](https://github.com/SciML/CurveFit.jl) for more details on fitting.
+## Helper Functions
 
+```julia
+# Width conversion
+fwhm = sigma_to_fwhm(σ)   # Gaussian σ → FWHM
+σ = fwhm_to_sigma(fwhm)   # FWHM → Gaussian σ
+
+# Area calculation
+area = gaussian_area(A, σ)    # A × σ × √(2π)
+area = lorentzian_area(A, Γ)  # A × π × Γ / 2
+```
+
+See the [documentation](https://garrekstemo.github.io/CurveFitModels.jl/stable) for full details on all functions.
