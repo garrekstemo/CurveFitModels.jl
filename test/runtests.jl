@@ -882,4 +882,98 @@ Random.seed!(42)
         @test_throws ArgumentError n_exponentials(-5)
     end
 
+    # =========================================================================
+    # TYPE STABILITY TESTS
+    # =========================================================================
+
+    @testset "Type stability" begin
+        x = collect(0.0:0.1:4.0)
+        t = collect(0.0:0.1:4.0)
+
+        # Lineshapes
+        @test @inferred(gaussian([1.0, 0.0, 1.0], x)) isa Vector{Float64}
+        @test @inferred(gaussian([1.0, 0.0, 1.0, 0.1], x)) isa Vector{Float64}
+        @test @inferred(lorentzian([1.0, 0.0, 1.0], x)) isa Vector{Float64}
+        @test @inferred(lorentzian([1.0, 0.0, 1.0, 0.1], x)) isa Vector{Float64}
+        @test @inferred(pseudo_voigt([1.0, 0.0, 1.0, 0.5], x)) isa Vector{Float64}
+        @test @inferred(power_law([1.0, 2.0], x)) isa Vector{Float64}
+        @test @inferred(power_law([1.0, 2.0, 0.1], x)) isa Vector{Float64}
+        @test @inferred(logistic([1.0, 1.0, 0.0], x)) isa Vector{Float64}
+        @test @inferred(logistic([1.0, 1.0, 0.0, 0.1], x)) isa Vector{Float64}
+
+        # Temporal
+        @test @inferred(single_exponential([1.0, 1.0], t)) isa Vector{Float64}
+        @test @inferred(single_exponential([1.0, 1.0, 0.1], t)) isa Vector{Float64}
+        @test @inferred(stretched_exponential([1.0, 1.0, 0.5], t)) isa Vector{Float64}
+        @test @inferred(stretched_exponential([1.0, 1.0, 0.5, 0.1], t)) isa Vector{Float64}
+        @test @inferred(sine([1.0, 1.0, 0.0], t)) isa Vector{Float64}
+        @test @inferred(sine([1.0, 1.0, 0.0, 0.1], t)) isa Vector{Float64}
+        @test @inferred(damped_sine([1.0, 1.0, 0.0, 1.0], t)) isa Vector{Float64}
+        @test @inferred(damped_sine([1.0, 1.0, 0.0, 1.0, 0.1], t)) isa Vector{Float64}
+
+        # Oscillator models (complex)
+        ν = collect(80.0:1.0:120.0)
+        @test @inferred(lorentz_oscillator([1.0, 100.0, 1.0], ν)) isa Vector{ComplexF64}
+        @test @inferred(dielectric_real([1.0, 100.0, 1.0], ν)) isa Vector{Float64}
+        @test @inferred(dielectric_imag([1.0, 100.0, 1.0], ν)) isa Vector{Float64}
+
+        # 2D Gaussian (returns flattened Vector for curve fitting)
+        X = [xi for xi in -2.0:0.5:2.0, _ in -2.0:0.5:2.0]
+        Y = [yj for _ in -2.0:0.5:2.0, yj in -2.0:0.5:2.0]
+        @test @inferred(gaussian2d([1.0, 0.0, 1.0, 0.0, 1.0], (X, Y))) isa Vector{Float64}
+
+        # Helper functions
+        @test @inferred(sigma_to_fwhm(1.0)) isa Float64
+        @test @inferred(fwhm_to_sigma(1.0)) isa Float64
+        @test @inferred(gaussian_area(1.0, 1.0)) isa Float64
+        @test @inferred(lorentzian_area(1.0, 1.0)) isa Float64
+    end
+
+    # =========================================================================
+    # ALLOCATION TESTS
+    # =========================================================================
+
+    @testset "Zero allocations (after warmup)" begin
+        # Pre-allocate inputs
+        x = collect(0.0:0.1:4.0)
+        t = collect(0.0:0.1:4.0)
+        ν = collect(80.0:1.0:120.0)
+
+        # Warmup calls
+        gaussian([1.0, 0.0, 1.0], x)
+        lorentzian([1.0, 0.0, 1.0], x)
+        pseudo_voigt([1.0, 0.0, 1.0, 0.5], x)
+        power_law([1.0, 2.0], x)
+        logistic([1.0, 1.0, 0.0], x)
+        single_exponential([1.0, 1.0], t)
+        stretched_exponential([1.0, 1.0, 0.5], t)
+        sine([1.0, 1.0, 0.0], t)
+        damped_sine([1.0, 1.0, 0.0, 1.0], t)
+        lorentz_oscillator([1.0, 100.0, 1.0], ν)
+        dielectric_real([1.0, 100.0, 1.0], ν)
+        dielectric_imag([1.0, 100.0, 1.0], ν)
+
+        # Allocation tests - these should only allocate for the output array
+        # The output array allocation is unavoidable, so we check it's minimal
+        baseline_alloc = @allocated zeros(length(x))
+
+        @test @allocated(gaussian([1.0, 0.0, 1.0], x)) <= 2 * baseline_alloc
+        @test @allocated(lorentzian([1.0, 0.0, 1.0], x)) <= 2 * baseline_alloc
+        @test @allocated(pseudo_voigt([1.0, 0.0, 1.0, 0.5], x)) <= 2 * baseline_alloc
+        @test @allocated(power_law([1.0, 2.0], x)) <= 2 * baseline_alloc
+        @test @allocated(logistic([1.0, 1.0, 0.0], x)) <= 2 * baseline_alloc
+        @test @allocated(single_exponential([1.0, 1.0], t)) <= 2 * baseline_alloc
+        @test @allocated(stretched_exponential([1.0, 1.0, 0.5], t)) <= 2 * baseline_alloc
+        @test @allocated(sine([1.0, 1.0, 0.0], t)) <= 2 * baseline_alloc
+        @test @allocated(damped_sine([1.0, 1.0, 0.0, 1.0], t)) <= 2 * baseline_alloc
+        @test @allocated(dielectric_real([1.0, 100.0, 1.0], ν)) <= 2 * baseline_alloc
+        @test @allocated(dielectric_imag([1.0, 100.0, 1.0], ν)) <= 2 * baseline_alloc
+
+        # Helper functions should allocate nothing
+        @test @allocated(sigma_to_fwhm(1.0)) == 0
+        @test @allocated(fwhm_to_sigma(1.0)) == 0
+        @test @allocated(gaussian_area(1.0, 1.0)) == 0
+        @test @allocated(lorentzian_area(1.0, 1.0)) == 0
+    end
+
 end
