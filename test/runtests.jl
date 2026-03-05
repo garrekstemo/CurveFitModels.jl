@@ -885,6 +885,138 @@ Random.seed!(42)
     end
 
     # =========================================================================
+    # FANO, VOIGT, LOG-NORMAL CONSISTENCY CHECKS
+    # =========================================================================
+
+    @testset "Fano consistency checks" begin
+        A, x0, Γ, q = 1.0, 0.0, 1.0, 2.0
+
+        # At center (ε=0): f = A * q^2 / 1 = A * q^2
+        @test fano([A, x0, Γ, q], 0.0) ≈ A * q^2
+
+        # Large |q| recovers Lorentzian-like shape (symmetric)
+        q_large = 1000.0
+        Δx = 0.5
+        y_left = fano([A, x0, Γ, q_large], x0 - Δx)
+        y_right = fano([A, x0, Γ, q_large], x0 + Δx)
+        @test y_left ≈ y_right rtol=0.01
+
+        # Asymmetry for moderate q: f(x0-Γ) != f(x0+Γ)
+        y_minus = fano([A, x0, Γ, q], x0 - Γ)
+        y_plus = fano([A, x0, Γ, q], x0 + Γ)
+        @test y_minus != y_plus  # Should be asymmetric
+
+        # With offset
+        y0 = 0.5
+        @test fano([A, x0, Γ, q, y0], x0) ≈ A * q^2 + y0
+
+        # Vector input
+        x = collect(-5.0:0.1:5.0)
+        y = fano([A, x0, Γ, q], x)
+        @test length(y) == length(x)
+    end
+
+    @testset "Voigt consistency checks" begin
+        A, x0, σ, γ = 2.0, 0.0, 1.0, 0.5
+
+        # Peak at center equals A
+        @test voigt([A, x0, σ, γ], x0) ≈ A rtol=1e-6
+
+        # Symmetry
+        Δx = 0.7
+        @test voigt([A, x0, σ, γ], x0 - Δx) ≈ voigt([A, x0, σ, γ], x0 + Δx) rtol=1e-10
+
+        # Small γ approaches Gaussian shape
+        γ_small = 1e-6
+        x = collect(-3.0:0.1:3.0)
+        y_voigt = [voigt([A, x0, σ, γ_small], xi) for xi in x]
+        y_gauss = gaussian([A, x0, σ], x)
+        @test maximum(abs.(y_voigt .- y_gauss)) < 0.01
+
+        # With offset
+        y0 = 0.3
+        @test voigt([A, x0, σ, γ, y0], x0) ≈ A + y0 rtol=1e-6
+
+        # Vector input
+        y_vec = voigt([A, x0, σ, γ], x)
+        @test length(y_vec) == length(x)
+    end
+
+    @testset "Log-normal consistency checks" begin
+        A, μ, σ = 1.0, 1.0, 0.5
+
+        # Positive for positive x
+        x = collect(0.1:0.1:10.0)
+        y = log_normal([A, μ, σ], x)
+        @test all(y .>= 0)
+
+        # Peak location at exp(μ - σ²)
+        x_peak = exp(μ - σ^2)
+        # Value at peak should be close to maximum
+        x_dense = collect(0.01:0.01:10.0)
+        y_dense = log_normal([A, μ, σ], x_dense)
+        idx_max = argmax(y_dense)
+        @test abs(x_dense[idx_max] - x_peak) < 0.05
+
+        # With offset
+        y0 = 0.1
+        y_with_offset = log_normal([A, μ, σ, y0], 0.001)
+        @test y_with_offset >= y0  # Should be at least the offset
+
+        # Near-zero x should not error (ForwardDiff safety)
+        @test isfinite(log_normal([A, μ, σ], 1e-20))
+    end
+
+    @testset "Fano fitting" begin
+        x = collect(-5.0:0.1:5.0)
+        p_true = [1.5, 0.5, 0.8, 3.0]
+        y_true = fano(p_true, x)
+        noise = 0.05 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [1.2, 0.3, 1.0, 2.5]
+        prob = NonlinearCurveFitProblem(fano, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.3)
+        @test isapprox(p_fit[2], p_true[2], atol=0.3)
+    end
+
+    @testset "Voigt fitting" begin
+        x = collect(-5.0:0.1:5.0)
+        p_true = [2.0, 0.5, 0.8, 0.3]
+        y_true = voigt(p_true, x)
+        noise = 0.02 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [1.8, 0.3, 1.0, 0.5]
+        prob = NonlinearCurveFitProblem(voigt, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=0.3)
+        @test isapprox(p_fit[2], p_true[2], atol=0.3)
+    end
+
+    @testset "Log-normal fitting" begin
+        x = collect(0.1:0.1:10.0)
+        p_true = [5.0, 1.0, 0.5]
+        y_true = log_normal(p_true, x)
+        noise = 0.005 * randn(length(x))
+        y_data = y_true .+ noise
+
+        p0 = [4.0, 0.8, 0.6]
+        prob = NonlinearCurveFitProblem(log_normal, p0, x, y_data)
+        sol = solve(prob)
+        p_fit = coef(sol)
+
+        @test isapprox(p_fit[1], p_true[1], atol=1.0)
+        @test isapprox(p_fit[2], p_true[2], atol=0.3)
+        @test isapprox(p_fit[3], p_true[3], atol=0.3)
+    end
+
+    # =========================================================================
     # TYPE STABILITY TESTS
     # =========================================================================
 

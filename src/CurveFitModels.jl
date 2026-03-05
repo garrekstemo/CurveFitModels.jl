@@ -19,7 +19,10 @@ export single_exponential,
        logistic,
        lorentz_oscillator,
        dielectric_real,
-       dielectric_imag
+       dielectric_imag,
+       fano,
+       voigt,
+       log_normal
 
 include("lineshapes.jl")
 include("temporal.jl")

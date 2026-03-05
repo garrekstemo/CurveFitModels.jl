@@ -350,3 +350,104 @@ function dielectric_imag(p, ν)
     A, ν₀, Γ = p[1], p[2], p[3]
     return @. A * Γ * ν / ((ν^2 - ν₀^2)^2 + Γ^2 * ν^2)
 end
+
+# ============================================================================
+# Fano, Voigt, Log-normal lineshapes
+# ============================================================================
+
+"""
+    fano(p, x)
+
+Fano lineshape for asymmetric resonance profiles.
+
+# Arguments
+- `p`: Parameters `[A, x₀, Γ, q]` or `[A, x₀, Γ, q, y₀]`
+  - `A`: Amplitude
+  - `x₀`: Center position
+  - `Γ`: Width parameter
+  - `q`: Fano asymmetry parameter (|q| → ∞ recovers Lorentzian)
+  - `y₀`: Offset (optional, default 0)
+- `x`: Independent variable
+
+Standard form: `A × (q + ε)² / (1 + ε²)` where `ε = (x - x₀) / Γ`.
+
+[https://en.wikipedia.org/wiki/Fano_resonance](https://en.wikipedia.org/wiki/Fano_resonance)
+"""
+function fano(p, x)
+    A, x0, Γ, q = p[1], p[2], p[3], p[4]
+    y0 = length(p) >= 5 ? p[5] : zero(eltype(p))
+    ε = @. (x - x0) / Γ
+    return @. A * (q + ε)^2 / (1 + ε^2) + y0
+end
+
+"""
+    voigt(p, x)
+
+Voigt profile — the exact convolution of Gaussian and Lorentzian lineshapes.
+Uses the pseudo-Voigt approximation (Thompson et al. 1987) for ForwardDiff
+compatibility. Accurate to ~1% of peak height.
+
+# Arguments
+- `p`: Parameters `[A, x₀, σ, γ]` or `[A, x₀, σ, γ, y₀]`
+  - `A`: Amplitude (peak height)
+  - `x₀`: Center position
+  - `σ`: Gaussian width (standard deviation)
+  - `γ`: Lorentzian half-width at half-maximum
+  - `y₀`: Offset (optional, default 0)
+- `x`: Independent variable
+
+The Voigt profile reduces to a Gaussian when γ → 0 and to a Lorentzian when σ → 0.
+
+[https://en.wikipedia.org/wiki/Voigt_profile](https://en.wikipedia.org/wiki/Voigt_profile)
+"""
+function voigt(p, x)
+    A, x0, σ, γ = p[1], p[2], p[3], p[4]
+    y0 = length(p) >= 5 ? p[5] : zero(eltype(p))
+    # Convert σ (Gaussian std dev) to Gaussian FWHM
+    fG = σ * FWHM_SIGMA_FACTOR
+    # Lorentzian FWHM = 2γ
+    fL = 2 * γ
+    # Thompson et al. (1987) approximation for total FWHM
+    f5 = fG^5 + 2.69269 * fG^4 * fL + 2.42843 * fG^3 * fL^2 + 4.47163 * fG^2 * fL^3 + 0.07842 * fG * fL^4 + fL^5
+    fV = f5^(one(eltype(p)) / 5)
+    # Lorentzian fraction η
+    r = fL / fV
+    η_val = 1.36603 * r - 0.47719 * r^2 + 0.11116 * r^3
+    # Clamp η to [0, 1] using smooth min/max for autodiff
+    η = max(zero(η_val), min(one(η_val), η_val))
+    # Gaussian and Lorentzian components with same FWHM = fV
+    σ_eff = fV / FWHM_SIGMA_FACTOR
+    half_Γ = fV / 2
+    @. A * ((1 - η) * exp(-((x - x0)^2) / (2 * σ_eff^2)) + η / (1 + ((x - x0) / half_Γ)^2)) + y0
+end
+
+"""
+    log_normal(p, x)
+
+Log-normal distribution peak shape. Common for inhomogeneously broadened
+emission (quantum dots, nanocrystals, fluorescent dyes).
+
+# Arguments
+- `p`: Parameters `[A, μ, σ]` or `[A, μ, σ, y₀]`
+  - `A`: Amplitude
+  - `μ`: Log-space center (peak maximum at `exp(μ - σ²)`)
+  - `σ`: Log-space width
+  - `y₀`: Offset (optional, default 0)
+- `x`: Independent variable
+
+```math
+\\begin{aligned}
+    f(x) = \\frac{A}{x \\sigma \\sqrt{2\\pi}} \\exp\\left(-\\frac{(\\ln x - \\mu)^2}{2\\sigma^2}\\right) + y_0
+\\end{aligned}
+```
+
+[https://en.wikipedia.org/wiki/Log-normal_distribution](https://en.wikipedia.org/wiki/Log-normal_distribution)
+"""
+function log_normal(p, x)
+    A, μ, σ = p[1], p[2], p[3]
+    y0 = length(p) >= 4 ? p[4] : zero(eltype(p))
+    # max() instead of branch — ForwardDiff Dual numbers don't support
+    # boolean comparisons, so x <= 0 && return would break autodiff
+    x_safe = @. max(x, eps(typeof(float(μ))))
+    return @. A * exp(-(log(x_safe) - μ)^2 / (2σ^2)) / (x_safe * σ * sqrt(2π)) + y0
+end
