@@ -6,6 +6,7 @@ on:
       - main
     tags: '*'
   pull_request:
+    paths: ['docs/**', 'src/**']
 
 jobs:
   build:
