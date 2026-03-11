@@ -6,6 +6,7 @@ authors = ["Garrek Stemo <8449000+garrekstemo@users.noreply.github.com>"]
 [deps]
 
 [compat]
+Aqua = "0.8"
 julia = "1.10"
 
 [extras]
