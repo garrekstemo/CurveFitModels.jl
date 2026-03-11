@@ -10,6 +10,14 @@ lorentzian
 pseudo_voigt
 ```
 
+## Asymmetric & Special Profiles
+
+```@docs
+fano
+voigt
+log_normal
+```
+
 ## Other Lineshapes
 
 ```@docs
