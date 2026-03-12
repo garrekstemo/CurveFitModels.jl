@@ -2,10 +2,15 @@ using Test
 using CurveFit
 using Random
 using CurveFitModels
+using Aqua
 
 Random.seed!(42)
 
 @testset "CurveFitModels Tests" begin
+
+    @testset "Code quality (Aqua.jl)" begin
+        Aqua.test_all(CurveFitModels; deps_compat=(check_extras=false,))
+    end
 
     # =========================================================================
     # CONSISTENCY CHECKS

@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/garrekstemo/CurveFitModels.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/garrekstemo/CurveFitModels.jl)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://garrekstemo.github.io/CurveFitModels.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://garrekstemo.github.io/CurveFitModels.jl/dev)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 A Julia package providing model functions for curve fitting with [CurveFit.jl](https://github.com/SciML/CurveFit.jl). Originally developed with spectroscopy applications in mind, but useful for any nonlinear curve fitting task.
 
@@ -88,9 +89,3 @@ fwhm = sigma_to_fwhm(σ)   # Gaussian σ → FWHM
 area = gaussian_area(A, σ)    # A × σ × √(2π)
 area = lorentzian_area(A, Γ)  # A × π × Γ / 2
 ```
-
-See the [documentation](https://garrekstemo.github.io/CurveFitModels.jl/stable) for full details on all functions.
-
-## Acknowledgments
-
-Claude (Anthropic) assisted with development.
