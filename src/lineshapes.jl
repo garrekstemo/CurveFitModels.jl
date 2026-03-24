@@ -403,10 +403,11 @@ The Voigt profile reduces to a Gaussian when γ → 0 and to a Lorentzian when �
 function voigt(p, x)
     A, x0, σ, γ = p[1], p[2], p[3], p[4]
     y0 = length(p) >= 5 ? p[5] : zero(eltype(p))
+    # Use abs for width params — optimizer may explore negative values
     # Convert σ (Gaussian std dev) to Gaussian FWHM
-    fG = σ * FWHM_SIGMA_FACTOR
+    fG = abs(σ) * FWHM_SIGMA_FACTOR
     # Lorentzian FWHM = 2γ
-    fL = 2 * γ
+    fL = 2 * abs(γ)
     # Thompson et al. (1987) approximation for total FWHM
     f5 = fG^5 + 2.69269 * fG^4 * fL + 2.42843 * fG^3 * fL^2 + 4.47163 * fG^2 * fL^3 + 0.07842 * fG * fL^4 + fL^5
     fV = f5^(one(eltype(p)) / 5)
