@@ -362,7 +362,8 @@ Fano lineshape for asymmetric resonance profiles.
 
 # Arguments
 - `p`: Parameters `[A, x₀, Γ, q]` or `[A, x₀, Γ, q, y₀]`
-  - `A`: Amplitude
+  - `A`: Scale factor — *not* the peak height. The value at `x₀` is `A·q²` and the
+    profile maximum is `A·(1 + q²)`.
   - `x₀`: Center position
   - `Γ`: Width parameter
   - `q`: Fano asymmetry parameter (|q| → ∞ recovers Lorentzian)
