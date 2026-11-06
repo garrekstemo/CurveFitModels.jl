@@ -10,7 +10,7 @@ Random.seed!(42)
 @testset "CurveFitModels Tests" begin
 
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(CurveFitModels; deps_compat=(check_extras=false,))
+        Aqua.test_all(CurveFitModels)
     end
 
     # =========================================================================

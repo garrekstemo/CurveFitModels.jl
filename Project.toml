@@ -5,6 +5,9 @@ authors = ["Garrek Stemo <8449000+garrekstemo@users.noreply.github.com>"]
 
 [compat]
 Aqua = "0.8"
+CurveFit = "1.11"
+Random = "1"
+Test = "1"
 julia = "1.10"
 
 [extras]
