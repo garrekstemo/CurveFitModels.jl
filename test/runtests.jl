@@ -1,5 +1,6 @@
 using Test
 using CurveFit
+using CurveFit: solve  # CurveFit ≥ 1.11 no longer re-exports CommonSolve.solve
 using Random
 using CurveFitModels
 using Aqua
