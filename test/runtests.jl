@@ -1,5 +1,6 @@
 using Test
 using CurveFit
+using CurveFit: solve, coef, rss  # CurveFit ≥ 1.11 no longer re-exports these
 using Random
 using CurveFitModels
 using Aqua
@@ -9,7 +10,7 @@ Random.seed!(42)
 @testset "CurveFitModels Tests" begin
 
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(CurveFitModels; deps_compat=(check_extras=false,))
+        Aqua.test_all(CurveFitModels)
     end
 
     # =========================================================================

@@ -385,8 +385,11 @@ end
     voigt(p, x)
 
 Voigt profile — the exact convolution of Gaussian and Lorentzian lineshapes.
-Uses the pseudo-Voigt approximation (Thompson et al. 1987) for ForwardDiff
-compatibility. Accurate to ~1% of peak height.
+Uses the pseudo-Voigt approximation of Thompson, Cox and Hastings (J. Appl.
+Cryst. 20, 79, 1987) for ForwardDiff compatibility: a Gaussian and a
+Lorentzian of equal area and equal FWHM are mixed with the fraction η and the
+sum is scaled to the peak height `A`. Accurate to ~1% of peak height, and the
+split of the width between σ and γ follows the exact Voigt profile.
 
 # Arguments
 - `p`: Parameters `[A, x₀, σ, γ]` or `[A, x₀, σ, γ, y₀]`
@@ -417,10 +420,17 @@ function voigt(p, x)
     η_val = 1.36603 * r - 0.47719 * r^2 + 0.11116 * r^3
     # Clamp η to [0, 1] using smooth min/max for autodiff
     η = max(zero(η_val), min(one(η_val), η_val))
-    # Gaussian and Lorentzian components with same FWHM = fV
+    # Thompson's η weights a Gaussian and a Lorentzian of equal AREA and
+    # equal FWHM = fV (not of equal height: at equal FWHM and area the
+    # Lorentzian is only 0.68× as high as the Gaussian). Mix the
+    # area-normalized components, then scale so the peak height is A.
     σ_eff = fV / FWHM_SIGMA_FACTOR
     half_Γ = fV / 2
-    @. A * ((1 - η) * exp(-((x - x0)^2) / (2 * σ_eff^2)) + η / (1 + ((x - x0) / half_Γ)^2)) + y0
+    g_peak = 1 / (σ_eff * sqrt(2π))
+    l_peak = 1 / (π * half_Γ)
+    peak = (1 - η) * g_peak + η * l_peak
+    @. A * ((1 - η) * g_peak * exp(-((x - x0)^2) / (2 * σ_eff^2)) +
+            η * l_peak / (1 + ((x - x0) / half_Γ)^2)) / peak + y0
 end
 
 """
